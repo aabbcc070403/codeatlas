@@ -1,0 +1,24 @@
+{
+  "id": "fx-msg-01",
+  "kind": "defect",
+  "split": "dev",
+  "categoryKey": "postmessage",
+  "title": "postMessage 目标源为通配符",
+  "files": [
+    "package.json",
+    "README.md",
+    "src/bridge.ts",
+    "src/index.ts"
+  ],
+  "annotations": [
+    {
+      "ruleId": "sec/postmessage-unconstrained",
+      "category": "security",
+      "file": "src/bridge.ts",
+      "startLine": 7,
+      "endLine": 7,
+      "symbol": "sendHeight",
+      "condition": "targetOrigin 为 \"*\"：消息包含敏感数据且页面被恶意站点嵌入时任意源可收到"
+    }
+  ]
+}

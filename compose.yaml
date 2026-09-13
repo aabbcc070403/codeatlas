@@ -1,0 +1,100 @@
+# CodeAtlas 生产部署（R09）：db + migrate（一次性）+ web + worker。
+#
+# 重要：本机无 Docker，此文件**未经实际验证**（已知限制，见 README）。文件内容按
+# 01-项目规格 第 6/14 节编写；首次部署预期需现场排障，并按 README「生产路径」
+# 用 INTEGRATION_DATABASE_URL 指向测试专用 PostgreSQL（库名须含 test，见 README
+# 环境变量表）重跑租约/取消/额度原子性集成测试（pnpm test:integration；
+# 该路径直连 PostgreSQL，不启动 PGlite）。
+#
+# 使用：
+#   cp .env.example .env   # 必须修改 SESSION_SECRET、DEMO_ACCESS_CODE、ADMIN_ACCESS_CODE
+#                          # 与 DATABASE_URL 密码——生产禁止沿用任何默认访问码
+#   docker compose up --build
+#
+# 结构：
+#   db       pgvector/pg16 镜像，持久卷存数据，健康检查通过后才放行下游
+#   migrate  一次性服务：迁移 + 预置规范 seed，完成后退出（web/worker 依赖其完成）
+#   web      Next 生产构建（端口 3100），与 worker 同镜像不同 command
+#   worker   独立 worker（扫描/索引/评测/清理），共享 storage 卷读写快照
+#
+# 安全：全部容器非 root（镜像内 node 用户；db 镜像默认以 postgres 用户运行）；
+# 不挂载 Docker socket；不声明 privileged；web 公网暴露前应放置 HTTPS 反向代理。
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_USER: codeatlas
+      # 生产必须通过 .env 覆盖（compose 自动读取同目录 .env）
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?请在 .env 中设置 POSTGRES_PASSWORD}
+      POSTGRES_DB: codeatlas
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    # 仅内部网络可达；如需宿主机访问再映射端口（默认不对外暴露）
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U codeatlas -d codeatlas"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+  migrate:
+    # 与 web/worker 同一镜像：迁移与 seed 脚本经 tsx 运行
+    build: .
+    command: >
+      sh -c "node node_modules/tsx/dist/cli.mjs scripts/migrate.ts &&
+             node node_modules/tsx/dist/cli.mjs scripts/seed.ts &&
+             node node_modules/tsx/dist/cli.mjs scripts/doctor.ts"
+    environment: &app-env
+      DATABASE_URL: postgres://codeatlas:${POSTGRES_PASSWORD:?请在 .env 中设置 POSTGRES_PASSWORD}@db:5432/codeatlas
+      STORAGE_ROOT: /app/.data/storage
+      SESSION_SECRET: ${SESSION_SECRET:?生产必须设置 SESSION_SECRET（不得用开发默认值）}
+      DEMO_ACCESS_CODE: ${DEMO_ACCESS_CODE:?生产必须设置访问码（禁止沿用 codeatlas-demo 默认值）}
+      ADMIN_ACCESS_CODE: ${ADMIN_ACCESS_CODE:?生产必须设置访问码（禁止沿用 codeatlas-admin 默认值）}
+      AI_PROVIDER: ${AI_PROVIDER:-mock}
+      AI_BASE_URL: ${AI_BASE_URL:-}
+      AI_API_KEY: ${AI_API_KEY:-}
+      AI_CHAT_MODEL: ${AI_CHAT_MODEL:-}
+      AI_EMBEDDING_MODEL: ${AI_EMBEDDING_MODEL:-}
+      EMBEDDING_DIM: ${EMBEDDING_DIM:-1536}
+      AI_DAILY_TOKEN_LIMIT: ${AI_DAILY_TOKEN_LIMIT:-300000}
+      DATA_TTL_HOURS: ${DATA_TTL_HOURS:-24}
+      APP_ORIGIN: ${APP_ORIGIN:-}
+    volumes:
+      - storage:/app/.data/storage
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
+
+  web:
+    build: .
+    ports:
+      - "3100:3100"
+    environment: *app-env
+    volumes:
+      - storage:/app/.data/storage
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"fetch('http://127.0.0.1:3100/login').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))\""]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    restart: unless-stopped
+
+  worker:
+    build: .
+    command: ["node", "node_modules/tsx/dist/cli.mjs", "scripts/worker.ts"]
+    environment: *app-env
+    volumes:
+      - storage:/app/.data/storage
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+volumes:
+  db-data:
+  storage:

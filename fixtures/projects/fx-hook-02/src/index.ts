@@ -1,0 +1,1 @@
+export { bindResizeOnce } from './bindResize'

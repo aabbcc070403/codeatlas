@@ -1,0 +1,24 @@
+{
+  "id": "fx-msg-02",
+  "kind": "defect",
+  "split": "holdout",
+  "categoryKey": "postmessage",
+  "title": "message 监听未校验 event.origin",
+  "files": [
+    "package.json",
+    "README.md",
+    "src/listener.ts",
+    "src/index.ts"
+  ],
+  "annotations": [
+    {
+      "ruleId": "sec/message-no-origin-check",
+      "category": "security",
+      "file": "src/listener.ts",
+      "startLine": 2,
+      "endLine": 2,
+      "symbol": "listenForTheme",
+      "condition": "回调未比对 event.origin：任意来源窗口可伪造消息驱动页面逻辑"
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+# 构建上下文排除：不把本地秘密与数据带进镜像
+.env
+.env.local
+.data/
+.data-e2e/
+.git/
+.next/
+.next-e2e/
+node_modules/
+artifacts/
+test-results/
+playwright-report/
+docs/
+*.tsbuildinfo
+.e2e-dbg-*.cjs
+.e2e-debug.cjs

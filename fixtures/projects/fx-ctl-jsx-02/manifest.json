@@ -1,0 +1,14 @@
+{
+  "id": "fx-ctl-jsx-02",
+  "kind": "control",
+  "split": "holdout",
+  "categoryKey": "jsx-key",
+  "title": "对照：Fragment 携带 key",
+  "files": [
+    "package.json",
+    "README.md",
+    "src/RowList.tsx",
+    "src/index.ts"
+  ],
+  "annotations": []
+}

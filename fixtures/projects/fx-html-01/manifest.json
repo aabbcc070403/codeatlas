@@ -1,0 +1,24 @@
+{
+  "id": "fx-html-01",
+  "kind": "defect",
+  "split": "dev",
+  "categoryKey": "html-injection",
+  "title": "innerHTML 写入动态字符串",
+  "files": [
+    "package.json",
+    "README.md",
+    "src/render.ts",
+    "src/index.ts"
+  ],
+  "annotations": [
+    {
+      "ruleId": "sec/dom-html-injection",
+      "category": "security",
+      "file": "src/render.ts",
+      "startLine": 2,
+      "endLine": 2,
+      "symbol": "renderComment",
+      "condition": "右侧值若可被用户输入污染且未经净化，将注入任意 HTML/脚本"
+    }
+  ]
+}

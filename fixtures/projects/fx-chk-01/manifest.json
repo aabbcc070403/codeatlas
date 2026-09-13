@@ -1,0 +1,24 @@
+{
+  "id": "fx-chk-01",
+  "kind": "defect",
+  "split": "dev",
+  "categoryKey": "check-disabled",
+  "title": "裸 @ts-ignore 关闭类型检查",
+  "files": [
+    "package.json",
+    "README.md",
+    "src/config.ts",
+    "src/index.ts"
+  ],
+  "annotations": [
+    {
+      "ruleId": "mai/ts-check-disabled",
+      "category": "maintainability",
+      "file": "src/config.ts",
+      "startLine": 4,
+      "endLine": 4,
+      "symbol": "loadPort",
+      "condition": "该行绕过 TypeScript 诊断，类型错误不再被报告"
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "id": "fx-jsx-01",
+  "kind": "defect",
+  "split": "dev",
+  "categoryKey": "jsx-key",
+  "title": "列表渲染缺少稳定 key",
+  "files": [
+    "package.json",
+    "README.md",
+    "src/UserList.tsx",
+    "src/index.ts"
+  ],
+  "annotations": [
+    {
+      "ruleId": "cor/jsx-list-missing-key",
+      "category": "correctness",
+      "file": "src/UserList.tsx",
+      "startLine": 9,
+      "endLine": 9,
+      "symbol": "UserList",
+      "condition": "列表插入/删除/排序时 React 依据 key 复用节点，缺失导致状态错位"
+    }
+  ]
+}

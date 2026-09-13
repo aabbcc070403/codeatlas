@@ -1,0 +1,24 @@
+{
+  "id": "fx-hook-02",
+  "kind": "defect",
+  "split": "holdout",
+  "categoryKey": "hook-conditional",
+  "title": "useEffect 在普通函数内调用",
+  "files": [
+    "package.json",
+    "README.md",
+    "src/bindResize.ts",
+    "src/index.ts"
+  ],
+  "annotations": [
+    {
+      "ruleId": "cor/react-hook-conditional",
+      "category": "correctness",
+      "file": "src/bindResize.ts",
+      "startLine": 4,
+      "endLine": 4,
+      "symbol": "bindResizeOnce",
+      "condition": "普通函数内的 Hook 与任何组件实例都不对应，违反 Hook 调用规则"
+    }
+  ]
+}

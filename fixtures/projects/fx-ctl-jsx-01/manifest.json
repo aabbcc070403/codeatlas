@@ -1,0 +1,14 @@
+{
+  "id": "fx-ctl-jsx-01",
+  "kind": "control",
+  "split": "dev",
+  "categoryKey": "jsx-key",
+  "title": "对照：列表使用稳定 key",
+  "files": [
+    "package.json",
+    "README.md",
+    "src/UserList.tsx",
+    "src/index.ts"
+  ],
+  "annotations": []
+}

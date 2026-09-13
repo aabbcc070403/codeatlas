@@ -1,0 +1,14 @@
+{
+  "id": "fx-ctl-msg-02",
+  "kind": "control",
+  "split": "holdout",
+  "categoryKey": "postmessage",
+  "title": "对照：message 监听先比对来源白名单",
+  "files": [
+    "package.json",
+    "README.md",
+    "src/listener.ts",
+    "src/index.ts"
+  ],
+  "annotations": []
+}

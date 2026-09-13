@@ -1,0 +1,33 @@
+{
+  "id": "fx-dyn-02",
+  "kind": "defect",
+  "split": "dev",
+  "categoryKey": "dynamic-exec",
+  "title": "new Function 构造 + 字符串定时器",
+  "files": [
+    "package.json",
+    "README.md",
+    "src/schedule.ts",
+    "src/index.ts"
+  ],
+  "annotations": [
+    {
+      "ruleId": "sec/dynamic-code-exec",
+      "category": "security",
+      "file": "src/schedule.ts",
+      "startLine": 3,
+      "endLine": 3,
+      "symbol": "compileFormula",
+      "condition": "参数 body 若可被外部输入污染则构成任意代码执行；需追溯来源"
+    },
+    {
+      "ruleId": "sec/dynamic-code-exec",
+      "category": "security",
+      "file": "src/schedule.ts",
+      "startLine": 9,
+      "endLine": 9,
+      "symbol": "schedulePoll",
+      "condition": "定时器字符串参数会被当作代码求值；内容固定但绕过函数调用约束"
+    }
+  ]
+}

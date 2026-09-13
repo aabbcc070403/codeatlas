@@ -1,0 +1,41 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1789151522999,
+      "tag": "0000_aromatic_venom",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1789210380000,
+      "tag": "0001_project_deleting_at",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1789212046000,
+      "tag": "0002_daily_usage_reserved",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1789264897152,
+      "tag": "0003_minor_makkari",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1789266900000,
+      "tag": "0004_daily_reservations",
+      "breakpoints": true
+    }
+  ]
+}

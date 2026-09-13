@@ -1,0 +1,14 @@
+{
+  "id": "fx-ctl-msg-01",
+  "kind": "control",
+  "split": "dev",
+  "categoryKey": "postmessage",
+  "title": "对照：postMessage 指定具体目标源",
+  "files": [
+    "package.json",
+    "README.md",
+    "src/bridge.ts",
+    "src/index.ts"
+  ],
+  "annotations": []
+}

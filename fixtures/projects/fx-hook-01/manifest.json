@@ -1,0 +1,24 @@
+{
+  "id": "fx-hook-01",
+  "kind": "defect",
+  "split": "dev",
+  "categoryKey": "hook-conditional",
+  "title": "useState 在条件分支内调用",
+  "files": [
+    "package.json",
+    "README.md",
+    "src/Filters.tsx",
+    "src/index.ts"
+  ],
+  "annotations": [
+    {
+      "ruleId": "cor/react-hook-conditional",
+      "category": "correctness",
+      "file": "src/Filters.tsx",
+      "startLine": 6,
+      "endLine": 6,
+      "symbol": "Filters",
+      "condition": "分支未命中时 Hook 调用次数改变，React 依赖固定调用顺序，运行时将抛错"
+    }
+  ]
+}

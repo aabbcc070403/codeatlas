@@ -1,0 +1,14 @@
+{
+  "id": "fx-ctl-hook-02",
+  "kind": "control",
+  "split": "holdout",
+  "categoryKey": "hook-conditional",
+  "title": "对照：封装为自定义 Hook",
+  "files": [
+    "package.json",
+    "README.md",
+    "src/bindResize.ts",
+    "src/index.ts"
+  ],
+  "annotations": []
+}

@@ -1,0 +1,14 @@
+{
+  "id": "fx-ctl-dyn-01",
+  "kind": "control",
+  "split": "dev",
+  "categoryKey": "dynamic-exec",
+  "title": "对照：显式操作符映射替代动态执行",
+  "files": [
+    "package.json",
+    "README.md",
+    "src/calculator.ts",
+    "src/index.ts"
+  ],
+  "annotations": []
+}

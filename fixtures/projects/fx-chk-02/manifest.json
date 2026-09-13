@@ -1,0 +1,43 @@
+{
+  "id": "fx-chk-02",
+  "kind": "defect",
+  "split": "holdout",
+  "categoryKey": "check-disabled",
+  "title": "console 调试残留 + 禁用安全 ESLint 规则",
+  "files": [
+    "package.json",
+    "README.md",
+    "src/debug.ts",
+    "src/legacy-flags.ts",
+    "src/index.ts"
+  ],
+  "annotations": [
+    {
+      "ruleId": "mai/console-residue",
+      "category": "maintainability",
+      "file": "src/debug.ts",
+      "startLine": 3,
+      "endLine": 3,
+      "symbol": "debugDump",
+      "condition": "生产环境输出内部结构，可能泄露信息并污染用户控制台"
+    },
+    {
+      "ruleId": "mai/console-residue",
+      "category": "maintainability",
+      "file": "src/debug.ts",
+      "startLine": 5,
+      "endLine": 5,
+      "symbol": "debugDump",
+      "condition": "调试输出残留在生产代码中，应改用统一 logger"
+    },
+    {
+      "ruleId": "mai/ts-check-disabled",
+      "category": "maintainability",
+      "file": "src/legacy-flags.ts",
+      "startLine": 1,
+      "endLine": 1,
+      "symbol": "legacyDynamicModule",
+      "condition": "禁用安全相关 ESLint 规则（no-eval），风险信号在该范围丢失"
+    }
+  ]
+}

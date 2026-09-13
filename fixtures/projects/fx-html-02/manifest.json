@@ -1,0 +1,24 @@
+{
+  "id": "fx-html-02",
+  "kind": "defect",
+  "split": "dev",
+  "categoryKey": "html-injection",
+  "title": "dangerouslySetInnerHTML 注入动态内容",
+  "files": [
+    "package.json",
+    "README.md",
+    "src/BioCard.tsx",
+    "src/index.ts"
+  ],
+  "annotations": [
+    {
+      "ruleId": "sec/dom-html-injection",
+      "category": "security",
+      "file": "src/BioCard.tsx",
+      "startLine": 2,
+      "endLine": 2,
+      "symbol": "BioCard",
+      "condition": "bio 属性若来自用户输入且未净化，将注入任意 HTML/脚本"
+    }
+  ]
+}

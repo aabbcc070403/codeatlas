@@ -1,0 +1,14 @@
+{
+  "id": "fx-ctl-dyn-02",
+  "kind": "control",
+  "split": "dev",
+  "categoryKey": "dynamic-exec",
+  "title": "对照：白名单处理器与函数引用定时器",
+  "files": [
+    "package.json",
+    "README.md",
+    "src/schedule.ts",
+    "src/index.ts"
+  ],
+  "annotations": []
+}

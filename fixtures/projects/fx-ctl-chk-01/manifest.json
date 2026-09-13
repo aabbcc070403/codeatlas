@@ -1,0 +1,14 @@
+{
+  "id": "fx-ctl-chk-01",
+  "kind": "control",
+  "split": "dev",
+  "categoryKey": "check-disabled",
+  "title": "对照：@ts-expect-error 附带说明",
+  "files": [
+    "package.json",
+    "README.md",
+    "src/config.ts",
+    "src/index.ts"
+  ],
+  "annotations": []
+}

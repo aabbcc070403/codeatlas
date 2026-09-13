@@ -1,0 +1,404 @@
+{
+  "version": "v1-cd06ca6f",
+  "revision": 1,
+  "contentHash": "cd06ca6f281bd808994c1f91cb4ec14ab43579c6309a260ef378f78f3e7a36c3",
+  "ruleVersion": "static-rules-v1",
+  "categories": [
+    {
+      "key": "dynamic-exec",
+      "label": "动态代码执行"
+    },
+    {
+      "key": "html-injection",
+      "label": "HTML 注入入口"
+    },
+    {
+      "key": "postmessage",
+      "label": "跨窗口消息源"
+    },
+    {
+      "key": "jsx-key",
+      "label": "JSX 列表缺失 key"
+    },
+    {
+      "key": "hook-conditional",
+      "label": "Hook 条件/非法作用域调用"
+    },
+    {
+      "key": "check-disabled",
+      "label": "检查禁用与调试残留"
+    }
+  ],
+  "split": {
+    "dev": [
+      "fx-dyn-01",
+      "fx-ctl-dyn-01",
+      "fx-dyn-02",
+      "fx-ctl-dyn-02",
+      "fx-html-01",
+      "fx-ctl-html-01",
+      "fx-html-02",
+      "fx-ctl-html-02",
+      "fx-msg-01",
+      "fx-ctl-msg-01",
+      "fx-jsx-01",
+      "fx-ctl-jsx-01",
+      "fx-hook-01",
+      "fx-ctl-hook-01",
+      "fx-chk-01",
+      "fx-ctl-chk-01"
+    ],
+    "holdout": [
+      "fx-msg-02",
+      "fx-ctl-msg-02",
+      "fx-jsx-02",
+      "fx-ctl-jsx-02",
+      "fx-hook-02",
+      "fx-ctl-hook-02",
+      "fx-chk-02",
+      "fx-ctl-chk-02"
+    ]
+  },
+  "projectCount": 24,
+  "defectCount": 12,
+  "controlCount": 12,
+  "projects": [
+    {
+      "id": "fx-dyn-01",
+      "kind": "defect",
+      "split": "dev",
+      "categoryKey": "dynamic-exec",
+      "title": "eval 执行用户输入表达式",
+      "files": [
+        "package.json",
+        "README.md",
+        "src/expression.ts",
+        "src/index.ts"
+      ],
+      "annotationCount": 1
+    },
+    {
+      "id": "fx-ctl-dyn-01",
+      "kind": "control",
+      "split": "dev",
+      "categoryKey": "dynamic-exec",
+      "title": "对照：显式操作符映射替代动态执行",
+      "files": [
+        "package.json",
+        "README.md",
+        "src/calculator.ts",
+        "src/index.ts"
+      ],
+      "annotationCount": 0
+    },
+    {
+      "id": "fx-dyn-02",
+      "kind": "defect",
+      "split": "dev",
+      "categoryKey": "dynamic-exec",
+      "title": "new Function 构造 + 字符串定时器",
+      "files": [
+        "package.json",
+        "README.md",
+        "src/schedule.ts",
+        "src/index.ts"
+      ],
+      "annotationCount": 2
+    },
+    {
+      "id": "fx-ctl-dyn-02",
+      "kind": "control",
+      "split": "dev",
+      "categoryKey": "dynamic-exec",
+      "title": "对照：白名单处理器与函数引用定时器",
+      "files": [
+        "package.json",
+        "README.md",
+        "src/schedule.ts",
+        "src/index.ts"
+      ],
+      "annotationCount": 0
+    },
+    {
+      "id": "fx-html-01",
+      "kind": "defect",
+      "split": "dev",
+      "categoryKey": "html-injection",
+      "title": "innerHTML 写入动态字符串",
+      "files": [
+        "package.json",
+        "README.md",
+        "src/render.ts",
+        "src/index.ts"
+      ],
+      "annotationCount": 1
+    },
+    {
+      "id": "fx-ctl-html-01",
+      "kind": "control",
+      "split": "dev",
+      "categoryKey": "html-injection",
+      "title": "对照：textContent 纯文本渲染",
+      "files": [
+        "package.json",
+        "README.md",
+        "src/render.ts",
+        "src/index.ts"
+      ],
+      "annotationCount": 0
+    },
+    {
+      "id": "fx-html-02",
+      "kind": "defect",
+      "split": "dev",
+      "categoryKey": "html-injection",
+      "title": "dangerouslySetInnerHTML 注入动态内容",
+      "files": [
+        "package.json",
+        "README.md",
+        "src/BioCard.tsx",
+        "src/index.ts"
+      ],
+      "annotationCount": 1
+    },
+    {
+      "id": "fx-ctl-html-02",
+      "kind": "control",
+      "split": "dev",
+      "categoryKey": "html-injection",
+      "title": "对照：JSX 表达式渲染 + 带 key 列表",
+      "files": [
+        "package.json",
+        "README.md",
+        "src/BioCard.tsx",
+        "src/index.ts"
+      ],
+      "annotationCount": 0
+    },
+    {
+      "id": "fx-msg-01",
+      "kind": "defect",
+      "split": "dev",
+      "categoryKey": "postmessage",
+      "title": "postMessage 目标源为通配符",
+      "files": [
+        "package.json",
+        "README.md",
+        "src/bridge.ts",
+        "src/index.ts"
+      ],
+      "annotationCount": 1
+    },
+    {
+      "id": "fx-ctl-msg-01",
+      "kind": "control",
+      "split": "dev",
+      "categoryKey": "postmessage",
+      "title": "对照：postMessage 指定具体目标源",
+      "files": [
+        "package.json",
+        "README.md",
+        "src/bridge.ts",
+        "src/index.ts"
+      ],
+      "annotationCount": 0
+    },
+    {
+      "id": "fx-msg-02",
+      "kind": "defect",
+      "split": "holdout",
+      "categoryKey": "postmessage",
+      "title": "message 监听未校验 event.origin",
+      "files": [
+        "package.json",
+        "README.md",
+        "src/listener.ts",
+        "src/index.ts"
+      ],
+      "annotationCount": 1
+    },
+    {
+      "id": "fx-ctl-msg-02",
+      "kind": "control",
+      "split": "holdout",
+      "categoryKey": "postmessage",
+      "title": "对照：message 监听先比对来源白名单",
+      "files": [
+        "package.json",
+        "README.md",
+        "src/listener.ts",
+        "src/index.ts"
+      ],
+      "annotationCount": 0
+    },
+    {
+      "id": "fx-jsx-01",
+      "kind": "defect",
+      "split": "dev",
+      "categoryKey": "jsx-key",
+      "title": "列表渲染缺少稳定 key",
+      "files": [
+        "package.json",
+        "README.md",
+        "src/UserList.tsx",
+        "src/index.ts"
+      ],
+      "annotationCount": 1
+    },
+    {
+      "id": "fx-ctl-jsx-01",
+      "kind": "control",
+      "split": "dev",
+      "categoryKey": "jsx-key",
+      "title": "对照：列表使用稳定 key",
+      "files": [
+        "package.json",
+        "README.md",
+        "src/UserList.tsx",
+        "src/index.ts"
+      ],
+      "annotationCount": 0
+    },
+    {
+      "id": "fx-jsx-02",
+      "kind": "defect",
+      "split": "holdout",
+      "categoryKey": "jsx-key",
+      "title": "Fragment 子元素缺少 key",
+      "files": [
+        "package.json",
+        "README.md",
+        "src/RowList.tsx",
+        "src/index.ts"
+      ],
+      "annotationCount": 1
+    },
+    {
+      "id": "fx-ctl-jsx-02",
+      "kind": "control",
+      "split": "holdout",
+      "categoryKey": "jsx-key",
+      "title": "对照：Fragment 携带 key",
+      "files": [
+        "package.json",
+        "README.md",
+        "src/RowList.tsx",
+        "src/index.ts"
+      ],
+      "annotationCount": 0
+    },
+    {
+      "id": "fx-hook-01",
+      "kind": "defect",
+      "split": "dev",
+      "categoryKey": "hook-conditional",
+      "title": "useState 在条件分支内调用",
+      "files": [
+        "package.json",
+        "README.md",
+        "src/Filters.tsx",
+        "src/index.ts"
+      ],
+      "annotationCount": 1
+    },
+    {
+      "id": "fx-ctl-hook-01",
+      "kind": "control",
+      "split": "dev",
+      "categoryKey": "hook-conditional",
+      "title": "对照：Hook 全部位于组件顶层",
+      "files": [
+        "package.json",
+        "README.md",
+        "src/Filters.tsx",
+        "src/index.ts"
+      ],
+      "annotationCount": 0
+    },
+    {
+      "id": "fx-hook-02",
+      "kind": "defect",
+      "split": "holdout",
+      "categoryKey": "hook-conditional",
+      "title": "useEffect 在普通函数内调用",
+      "files": [
+        "package.json",
+        "README.md",
+        "src/bindResize.ts",
+        "src/index.ts"
+      ],
+      "annotationCount": 1
+    },
+    {
+      "id": "fx-ctl-hook-02",
+      "kind": "control",
+      "split": "holdout",
+      "categoryKey": "hook-conditional",
+      "title": "对照：封装为自定义 Hook",
+      "files": [
+        "package.json",
+        "README.md",
+        "src/bindResize.ts",
+        "src/index.ts"
+      ],
+      "annotationCount": 0
+    },
+    {
+      "id": "fx-chk-01",
+      "kind": "defect",
+      "split": "dev",
+      "categoryKey": "check-disabled",
+      "title": "裸 @ts-ignore 关闭类型检查",
+      "files": [
+        "package.json",
+        "README.md",
+        "src/config.ts",
+        "src/index.ts"
+      ],
+      "annotationCount": 1
+    },
+    {
+      "id": "fx-ctl-chk-01",
+      "kind": "control",
+      "split": "dev",
+      "categoryKey": "check-disabled",
+      "title": "对照：@ts-expect-error 附带说明",
+      "files": [
+        "package.json",
+        "README.md",
+        "src/config.ts",
+        "src/index.ts"
+      ],
+      "annotationCount": 0
+    },
+    {
+      "id": "fx-chk-02",
+      "kind": "defect",
+      "split": "holdout",
+      "categoryKey": "check-disabled",
+      "title": "console 调试残留 + 禁用安全 ESLint 规则",
+      "files": [
+        "package.json",
+        "README.md",
+        "src/debug.ts",
+        "src/legacy-flags.ts",
+        "src/index.ts"
+      ],
+      "annotationCount": 3
+    },
+    {
+      "id": "fx-ctl-chk-02",
+      "kind": "control",
+      "split": "holdout",
+      "categoryKey": "check-disabled",
+      "title": "对照：统一 logger 缓冲实现",
+      "files": [
+        "package.json",
+        "README.md",
+        "src/logger.ts",
+        "src/index.ts"
+      ],
+      "annotationCount": 0
+    }
+  ]
+}

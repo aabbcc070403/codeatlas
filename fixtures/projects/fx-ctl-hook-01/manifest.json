@@ -1,0 +1,14 @@
+{
+  "id": "fx-ctl-hook-01",
+  "kind": "control",
+  "split": "dev",
+  "categoryKey": "hook-conditional",
+  "title": "对照：Hook 全部位于组件顶层",
+  "files": [
+    "package.json",
+    "README.md",
+    "src/Filters.tsx",
+    "src/index.ts"
+  ],
+  "annotations": []
+}

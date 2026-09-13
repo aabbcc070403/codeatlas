@@ -1,0 +1,24 @@
+{
+  "id": "fx-jsx-02",
+  "kind": "defect",
+  "split": "holdout",
+  "categoryKey": "jsx-key",
+  "title": "Fragment 子元素缺少 key",
+  "files": [
+    "package.json",
+    "README.md",
+    "src/RowList.tsx",
+    "src/index.ts"
+  ],
+  "annotations": [
+    {
+      "ruleId": "cor/jsx-list-missing-key",
+      "category": "correctness",
+      "file": "src/RowList.tsx",
+      "startLine": 9,
+      "endLine": 9,
+      "symbol": "RowList",
+      "condition": "Fragment 子元素未携带 key：列表重排时 dt/dd 状态错位"
+    }
+  ]
+}

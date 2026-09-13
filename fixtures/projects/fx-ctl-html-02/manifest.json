@@ -1,0 +1,14 @@
+{
+  "id": "fx-ctl-html-02",
+  "kind": "control",
+  "split": "dev",
+  "categoryKey": "html-injection",
+  "title": "对照：JSX 表达式渲染 + 带 key 列表",
+  "files": [
+    "package.json",
+    "README.md",
+    "src/BioCard.tsx",
+    "src/index.ts"
+  ],
+  "annotations": []
+}

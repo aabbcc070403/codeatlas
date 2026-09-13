@@ -1,0 +1,8 @@
+allowBuilds:
+  esbuild: true
+  iconv: true
+# pnpm 11 默认 public-hoist-pattern 为空；ESLint FlatCompat 需从项目根解析
+# eslint-config-next 的插件（react-hooks/@next/react 等），显式恢复公开提升。
+publicHoistPattern:
+  - '*eslint*'
+  - '*prettier*'

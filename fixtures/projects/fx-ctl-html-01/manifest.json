@@ -1,0 +1,14 @@
+{
+  "id": "fx-ctl-html-01",
+  "kind": "control",
+  "split": "dev",
+  "categoryKey": "html-injection",
+  "title": "对照：textContent 纯文本渲染",
+  "files": [
+    "package.json",
+    "README.md",
+    "src/render.ts",
+    "src/index.ts"
+  ],
+  "annotations": []
+}

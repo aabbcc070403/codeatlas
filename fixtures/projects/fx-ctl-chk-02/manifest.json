@@ -1,0 +1,14 @@
+{
+  "id": "fx-ctl-chk-02",
+  "kind": "control",
+  "split": "holdout",
+  "categoryKey": "check-disabled",
+  "title": "对照：统一 logger 缓冲实现",
+  "files": [
+    "package.json",
+    "README.md",
+    "src/logger.ts",
+    "src/index.ts"
+  ],
+  "annotations": []
+}

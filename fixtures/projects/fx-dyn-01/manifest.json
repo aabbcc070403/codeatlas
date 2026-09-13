@@ -1,0 +1,24 @@
+{
+  "id": "fx-dyn-01",
+  "kind": "defect",
+  "split": "dev",
+  "categoryKey": "dynamic-exec",
+  "title": "eval 执行用户输入表达式",
+  "files": [
+    "package.json",
+    "README.md",
+    "src/expression.ts",
+    "src/index.ts"
+  ],
+  "annotations": [
+    {
+      "ruleId": "sec/dynamic-code-exec",
+      "category": "security",
+      "file": "src/expression.ts",
+      "startLine": 3,
+      "endLine": 3,
+      "symbol": "runExpression",
+      "condition": "参数 expr 来自外部输入时构成任意代码执行入口，需人工追溯来源"
+    }
+  ]
+}
