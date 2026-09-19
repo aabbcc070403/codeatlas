@@ -2,7 +2,7 @@
 
 本文记录评测数据集构成、三模式配置、指标定义与 R08 实测数字。所有数字可回溯：`evaluations` 表的 `metrics_json` 与逐项目 `scanId`（评测页每行可点「查看」跳转 `/scans/:id`）。执行记录见 `docs/progress.md` R08 节。
 
-**总口径声明（页面与 CLI 固定展示）**：24/16/8/12 等小样本的结果只称为「本样例集结果」，不能推广为所有项目准确率。**真实模型评测未执行**（本地无凭证），llm 模式数字为受控 Mock 管线验证，结果中逐项标注 provider=mock。
+**总口径声明（页面与 CLI 固定展示）**：24/16/8/12 等小样本的结果只称为「本样例集结果」，不能推广为所有项目准确率。**真实模型评测已于 2026-09-19 执行**（DeepSeek `deepseek-chat`，holdout 每模式重复 3 次，数字见 §4.5）；§4 的 llm 模式数字为 2026-09-13 受控 Mock 管线验证，结果中逐项标注 provider=mock——两套数字分栏并存、互不覆盖。
 
 ## 1. 数据集构成
 
@@ -58,7 +58,7 @@ pnpm eval -- --mode hybrid_rag --split holdout
 
 ## 4. R08 实测数字（2026-09-13，CLI 真实运行）
 
-**static_only 两行为确定性真实静态规则结果；llm 两行为受控 Mock 管线（provider=mock），不冒充真实模型指标。**
+**static_only 两行为确定性真实静态规则结果；llm 两行为受控 Mock 管线（provider=mock），不冒充真实模型指标。本节为 2026-09-13 时点记录，数字保留不动；真实模型（DeepSeek）实测数字见 §4.5。**
 
 | 模式 | 划分 | 项目数 | Precision | Recall | F1 | 证据有效率 | 延迟 p50/p95 | token/项目 | provider |
 |---|---|---|---|---|---|---|---|---|---|
@@ -72,9 +72,43 @@ pnpm eval -- --mode hybrid_rag --split holdout
 - 评测产生的预置样例项目 / 快照保留在库与存储中（每个数字可回溯原始扫描），不做自动清理。
 - 目标而非承诺（规格 13：保留集 hybrid_rag precision ≥ 0.80、recall ≥ 0.65）在真实模型评测执行前**无从评估**，不做 extrapolation。
 
+## 4.5 真实模型实测数字（2026-09-19，DeepSeek，CLI 真实运行）
+
+规格 13 要求的保留集重复 3 次（均值与范围）真实模型评测。6 次运行全部 completed（llm_no_rag ×3 + hybrid_rag ×3，holdout 8 项目/次），零失败项目、零崩溃重跑；`evaluation_projects` 48 行 provider=openai、provider_is_mock=false、model_id=deepseek-chat。逐次明细、6 条 evaluations 记录 ID 与逐项目 scanId 见 `deliverables/real-ai-holdout-2026-09-19.md`（冒烟记录见 `deliverables/real-ai-smoke-2026-09-19.md`）。
+
+- **环境**：`deepseek-chat`（DeepSeek OpenAI 兼容模式，实测映射 deepseek-flash）；数据集 `v1-cd06ca6f`，划分 holdout 8 项目（4 缺陷 + 4 对照）。
+- **词法检索降级声明**：DeepSeek 无 embedding API，hybrid_rag 的向量检索路降级为纯词法检索——本节数字口径为「词法检索 × 真实模型」，pgvector 混合检索的真实效果未验证。
+
+**两模式均值 ± 范围（min–max，n=3）**：
+
+| 指标 | llm_no_rag | hybrid_rag |
+|---|---|---|
+| Precision | 0.396（0.353–0.462） | 0.421（0.400–0.462） |
+| Recall | 1.000（三次全满） | 1.000（三次全满） |
+| F1 | 0.566（0.522–0.632） | 0.591（0.571–0.632） |
+| 证据有效率 | 75.5%（69.2–82.4%） | 79.7%（73.3–92.3%） |
+| 延迟 p50 / p95 | 8,025 / 10,113ms | 7,389 / 10,074ms |
+| token/项目 | 10,137（9,201–11,051） | 13,025（11,561–14,787） |
+
+- **RAG 消融可回溯**：llm_no_rag 三次 scan_citations 均为 **0 条**（RAG 隔离严格生效）；hybrid_rag 三次 **5 / 9 / 9 条**，命中的规范均为预置库真实标题（与 holdout 缺陷类别对应）。
+- **与 Mock 数字分栏对照（不覆盖 §4）**：
+
+| 维度 | Mock（§4，dev 16 项目） | 真实模型（本节，holdout 8 项目 ×3 均值） |
+|---|---|---|
+| llm_no_rag token/项目 | 968 | 10,137（≈10.5×） |
+| hybrid_rag token/项目 | 1,848 | 13,025（≈7.0×） |
+| 延迟 | 49–75ms | p50 7,389–8,025ms / p95 10,074–10,113ms |
+| P / R / F1（llm 两模式） | 1.000 / 1.000 / 1.000 | P 0.396–0.421 / R 1.000 / F1 0.566–0.591 |
+| scan_citations（hybrid） | 24 条/16 项目 | 23 条/3×8 项目 |
+| provider | mock | openai（deepseek-chat→deepseek-flash） |
+
+- **如实结论**：Recall 三次全满（6/6 标注全部命中）；Precision 为短板，FP 主因为 fx-ctl-* 对照项目误报（模型在「相近对照」上仍报出告警）。RAG 带来 P +2.5pp（0.396→0.421）、F1 +2.5pp、证据有效率 +4.2pp，方向一致但幅度在小样本方差内，不足以宣称显著。规格 13 目标（holdout hybrid_rag P ≥ 0.80、R ≥ 0.65）：**R 达标（1.000）、P 未达标（0.421）**——目标是目标而非承诺，如实记录，不做 extrapolation。
+- **已知异常**：fx-ctl-jsx-02 六次扫描终态均为 partial（指标正常产出并计入结果，原因待排查）；无效引文每次 1–4 条，按设计计入 FP 不丢弃。
+- token 总消耗 555,892（llm_no_rag 243,296 + hybrid_rag 312,596），预算上限 AI_DAILY_TOKEN_LIMIT=2,000,000。
+
 ## 5. 限制
 
 1. **小样本口径**：24 项目 / 16-8 划分是设计期的最小验证集，指标方差大，只可作管线回归与演示，不可作为产品能力声明。
-2. **真实模型未执行**：规格 13 要求的 llm_no_rag / hybrid_rag 保留集重复 3 次（均值与范围）未运行——本地无模型凭证。凭证就绪后按 `pnpm eval` CLI 执行，预算受 `AI_DAILY_TOKEN_LIMIT` 约束；llm_no_rag 对真实模型的 RAG 隔离经 provider 包装层移除 retrieve_guidelines 实现（模型仍坚持调用该工具时工具会执行并记录在轨迹，UI 有 Mock / 真实标注可辨）。
+2. **真实模型评测已执行（2026-09-19，DeepSeek）**：规格 13 要求的 llm_no_rag / hybrid_rag 保留集重复 3 次（均值与范围）已完成（数字见 §4.5）。新限制：① DeepSeek 无 embedding API，hybrid_rag 向量检索路降级为纯词法——「pgvector 混合检索 × 真实模型」的效果未验证；② 追问预算偏紧：复杂问题下 DeepSeek 易用满 8 次工具调用导致 budget_exhausted 无回答（冒烟实测；规格值 4 次模型/8 次工具/60s 按受控行为设计）；③ fx-ctl-jsx-02 六次扫描终态均为 partial，原因待排查。llm_no_rag 对真实模型的 RAG 隔离经 provider 包装层移除 retrieve_guidelines 实现（消融可回溯验证见 §4.5）。
 3. **Mock 管线语义**：llm 模式的 token / 延迟为 Mock 执行的管线口径，不反映真实模型成本与延迟。
 4. 评测执行器中途崩溃时 evaluations 行停留 running（扫描任务可被常规 worker 接管），需重新发起评测（新记录）；评测 API 未提供页面级取消按钮（任务粒度取消经 jobs 机制可用）。

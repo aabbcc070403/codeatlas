@@ -624,3 +624,28 @@
 - **PDF 技术文档**:`deliverables/CodeAtlas-技术文档.pdf` 16 页(约 787KB)生成,全部 AI 评测数字如实标注 Mock;HTML 源目录随 PDF 一并入库。
 - **Secrets 扫描(公开仓库安全检查)**:对全部已跟踪文件执行多组 `git grep` 正则(sk- 前缀 / ghp_/gho_/ghu_/ghs_ GitHub token / AKIA·xox·AIza 云厂商前缀 / 密钥类赋值 / PEM 私钥块 / Bearer 串 / 非测试目录 32+ 随机串)。命中均为脱敏功能自身的测试 fixture(`import-redact.test.ts` 的 `AKIAIOSFODNN7EXAMPLE` AWS 官方示例密钥、字母序假 `ghp_`/`sk-` 串及无密钥材料的伪造 PEM 头;`messages.test.ts` 的 `sk-test-secret-value-123` 测试桩),人工复核排除;`.env` 被 .gitignore 忽略未跟踪,`git ls-files` 敏感模式文件仅 `.env.example` 空占位。**结论:无真实密钥泄露。**
 - **发布候选 tag**:`v1.0.0-rc.1`(annotated,2026-09-19),含本日文档与 deliverables 提交;从 tag 干净克隆复现通过(7 个提交、PDF 与 docs 记录齐全)后清理临时目录。
+
+---
+
+## 真实 AI 评测执行:冒烟 + holdout 3+3(2026-09-19,对应发布方案 P2)
+
+本机 `.env` 配置 DeepSeek(OpenAI 兼容模式):AI_PROVIDER=openai、AI_BASE_URL=https://api.deepseek.com、AI_CHAT_MODEL=deepseek-chat(实测映射 deepseek-flash);无 embedding 模型 → hybrid_rag 检索词法降级(冒烟已验证正常,属接受方案)。**预算调整**:`.env` 中 AI_DAILY_TOKEN_LIMIT 由 300,000 上调至 2,000,000——仅本地配置、不改代码;理由:3+3 holdout 估算需 29–34 万 token 贴近原上限,且真实模型在对照项目上探索轮次有波动,DeepSeek 成本极低,留足安全余量。`pnpm doctor` 通过(AI provider: openai、chat model: deepseek-chat、embedding 未配置词法降级、迁移 5/5、pgvector、预置规范 30 条、日 token 预算 2000000)。
+
+### 冒烟(deliverables/real-ai-smoke-2026-09-19.md)
+
+- 单项目 hybrid_rag holdout limit 1:completed,provider=openai、provider_is_mock=false;fx-msg-02 P=R=F1=1.000,证据有效率 100%,延迟 6,784ms,token 7,096/项目。
+- 追问冒烟(脚本 `scripts/smoke-real-ai.ts`,保留可复用):复杂问题 **budget_exhausted**——DeepSeek 3 轮内用满 8 次工具调用(read_file/search_code/retrieve_guidelines)探索,未在预算内提交回答;追问规格预算(4 次模型/8 次工具/60s)对真实模型探索型行为偏紧,降级路径按设计工作,按红线未改 src/。简单问题 answered(retrievalMode=lexical_only 词法降级直接可见)。
+- 补丁冒烟:proposed(1 次模型调用,token 1,579,耗时 1.6s),diff 合理可应用,语法校验通过(基线 0 错误 → 补丁后 0 错误)。
+
+### holdout 3+3(deliverables/real-ai-holdout-2026-09-19.md)
+
+- 6 次运行全部 completed(llm_no_rag ×3 + hybrid_rag ×3,holdout 8 项目/次),零失败项目、零崩溃重跑;`evaluation_projects` 48 行 provider=openai、provider_is_mock=false、model_id=deepseek-chat。
+- 关键数字(3 次均值,范围见交付报告):llm_no_rag P 0.396(0.353–0.462)/ R 1.000 / F1 0.566 / 证据有效率 75.5% / 延迟 p50 8,025ms / token 10,137 每项目;hybrid_rag P 0.421(0.400–0.462)/ R 1.000 / F1 0.591 / 证据有效率 79.7% / p50 7,389ms / token 13,025 每项目。
+- RAG 消融可回溯:llm_no_rag 三次 scan_citations 均为 0;hybrid_rag 三次 5/9/9 条,命中均为预置库真实规范标题。
+- 如实结论:Recall 三次全满(6/6);Precision 为短板,FP 主因为 fx-ctl-* 对照项目误报;RAG 带来 P/F1 各 +2.5pp、证据有效率 +4.2pp,方向一致但在小样本方差内不足以称显著;规格 13 目标(holdout hybrid_rag P≥0.80、R≥0.65):R 达标、P 未达标。已知异常:fx-ctl-jsx-02 六次扫描终态 partial(指标正常产出并计入,待排查)。
+- token 总消耗 555,892(llm_no_rag 243,296 + hybrid_rag 312,596),当日额度上限 2,000,000。
+
+### 文档分栏
+
+- `docs/evaluation.md`:总口径声明改为「真实模型评测已于 2026-09-19 执行」;新增 §4.5 真实模型实测数字(环境/词法降级声明/均值±范围表/RAG 消融/Mock 对照/如实结论/已知异常);§4 Mock 数字与表格一字不动(仅开头加时点标注);§5 第 2 条改写为已执行+新限制。
+- `docs/release-checklist.md`:§3 AI 模型状态、§4 评测口径、§7 未解决限制、§8 阶段状态、§10 收尾记录与未完成项同步更新。

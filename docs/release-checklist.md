@@ -37,16 +37,16 @@
 
 ## 3. AI 模型状态
 
-- 当前 provider:**mock**(本机无真实凭证)。`pnpm doctor` 显示 `AI provider: mock(Mock,未接入真实模型)`。
-- 真实模型状态:**未接入**。P2(真实 AI 小样本验证)依赖项目负责人在本机 `.env` 配置 `AI_PROVIDER=openai` 及密钥,完成后本表更新为真实 provider/model/日期。
-- 界面、报告、评测中所有 AI 输出均保留 Mock 标注;不存在把 Mock 结果描述为真实模型结果的表述。
+- 当前 provider:**openai 兼容(DeepSeek)**,模型 `deepseek-chat`(实测映射 deepseek-flash)——2026-09-19 起本机 `.env` 配置真实凭证。`pnpm doctor` 实测输出(2026-09-19):`AI provider: openai`、`chat model: deepseek-chat`、embedding 未配置(检索词法降级)、日 token 预算 2000000。
+- 真实模型评测:**已执行**(2026-09-19,冒烟 + holdout 3+3,数字与口径见 `docs/evaluation.md` §4.5 与 `deliverables/real-ai-holdout-2026-09-19.md`;遗留限制见 §10)。
+- 界面、报告、评测中的 AI 输出带 provider 标注(真实 openai / Mock);不存在把 Mock 结果描述为真实模型结果的表述。
 
 ## 4. 数据集与评测口径
 
 - datasetVersion:**`v1-cd06ca6f`**(revision 1,内容哈希 cd06ca6f…,`fixtures/dataset.json` 与 `docs/evaluation.md` 一致,已由 `pnpm fixtures:generate` 复核无漂移)。
 - ruleVersion:`static-rules-v1`。
 - 划分:开发集 16 / 保留集 8。
-- 评测口径:全部现有数字为 **Mock 模式**结果,标注于 `docs/evaluation.md`;真实模型评测(P2.3)未执行,不得引用 Mock 数字冒充真实效果。
+- 评测口径:Mock 模式历史数字标注于 `docs/evaluation.md` §4(2026-09-13);真实模型(DeepSeek)holdout 3+3 数字见同文件 §4.5(2026-09-19),两套分栏并存、互不覆盖,不得引用 Mock 数字冒充真实效果。
 
 ## 5. Docker / PostgreSQL 验证状态
 
@@ -62,7 +62,7 @@
 
 ## 7. 未解决限制(诚实清单)
 
-1. 真实模型 smoke 与保留集 ×3 评测未执行(P2,需本机凭证)。
+1. 真实 AI 评测遗留(2026-09-19 执行后):embedding 未配置,hybrid_rag 向量检索路降级为纯词法(DeepSeek 无 embedding API);追问预算对真实模型偏紧(复杂问题 budget_exhausted);fx-ctl-jsx-02 六次扫描终态 partial 待排查。
 2. Docker/Compose 全栈与生产 PostgreSQL 16 实测未执行(P3,需测试主机)。
 3. HTTPS 反向代理与部署加固未执行(P3.3)。
 4. 技术 PDF、演示视频、公开仓库(P5)未开始。
@@ -73,7 +73,7 @@
 | 阶段 | 状态 |
 | --- | --- |
 | P1 发布候选整理 | ✅ 本文件 + 工作区清理完成 |
-| P2 真实 AI 小样本验证 | ⏸ 等待本机配置真实凭证 |
+| P2 真实 AI 小样本验证 | ✅ 冒烟 + holdout 3+3 + 文档分栏完成(2026-09-19;词法检索降级口径,遗留见 §7.1) |
 | P3 Docker/PostgreSQL 外部验收 | ⏸ 等待测试主机 |
 | P4 产品展示优化 | ✅ P4.1 移动端导航 + P4.2 演示数据固定完成(2026-09-15) |
 | P5 比赛材料 | ⏸ 未开始 |
@@ -94,9 +94,10 @@
 - **PDF 技术文档**:`deliverables/CodeAtlas-技术文档.pdf`(16 页,约 787KB)生成于 `deliverables/`,所有 AI 评测数字如实标注 Mock,未冒充真实模型结果;HTML 源目录随 PDF 一并入库。
 - **Secrets 扫描(2026-09-19)**:对全部已跟踪文件执行多组 `git grep` 正则(sk- 前缀 20+ 字符 / ghp_/gho_/ghu_/ghs_ GitHub token / AKIA·xox·AIza 云厂商前缀 / 密钥类赋值模式 / PEM 私钥块 / Bearer 串 / 非测试目录 32+ 随机串赋值)。命中项均为脱敏(redact)功能自身的测试 fixture——`tests/unit/import-redact.test.ts` 与 `tests/integration/import.test.ts` 中的 `sk-abcdef…`、`ghp_abcdefg…`(字母序假串,且断言导入后被脱敏)、`AKIAIOSFODNN7EXAMPLE`(AWS 官方文档标准示例密钥)、伪造 PEM 头部(无密钥材料),及 `tests/integration/messages.test.ts` 的 `sk-test-secret-value-123`(测试桩值),人工复核后全部排除,非真实凭证。`.env` 本地存在但被 .gitignore 忽略、未跟踪;`git ls-files` 中敏感模式文件仅 `.env.example`(AI_API_KEY 等均为空占位)。**结论:无真实密钥泄露。**
 - **发布候选 tag**:`v1.0.0-rc.1`(annotated,2026-09-19):核心功能与比赛材料(PDF/文档/演示语料)就绪,真实 AI 评测与 Docker 验收待完成后进入 1.0.0;tag 干净克隆复现验证通过。
+- **真实 AI 评测(P2,2026-09-19 完成)**:本机 `.env` 配置 DeepSeek(`deepseek-chat`,实测映射 deepseek-flash;预算 AI_DAILY_TOKEN_LIMIT 上调至 2,000,000,本地配置)后执行——①冒烟:单项目 hybrid_rag + 追问 + 补丁(追问复杂问题 budget_exhausted 如实记录,`deliverables/real-ai-smoke-2026-09-19.md`);②holdout 3+3:llm_no_rag ×3 + hybrid_rag ×3,6 次全部 completed、零失败项目,token 总消耗 555,892(`deliverables/real-ai-holdout-2026-09-19.md`);③文档分栏:`docs/evaluation.md` 新增 §4.5 真实模型实测数字(§4 Mock 数字不动)、`docs/progress.md` 追加执行记录、本清单同步更新。关键数字(3 次均值):llm_no_rag P 0.396 / R 1.000 / F1 0.566,hybrid_rag P 0.421 / R 1.000 / F1 0.591;RAG 消融可回溯(llm_no_rag scan_citations 三次均 0,hybrid_rag 三次 5/9/9)。规格 13 目标 P≥0.80 未达标、R≥0.65 达标,如实记录不粉饰。
 
 ### 未完成项(如实保持)
 
-1. 真实 AI 小样本验证与保留集 ×3 评测(P2,需本机凭证)。
+1. 真实 AI 评测遗留(2026-09-19 执行后):embedding 无向量路(hybrid_rag 词法降级口径)、追问预算偏紧(复杂问题 budget_exhausted)、fx-ctl-jsx-02 六次扫描终态 partial 待排查。
 2. Docker/Compose 全栈与生产 PostgreSQL 16 实测(P3,需测试主机)。
 3. MP4 演示视频与在线演示环境(P5 后续项)。
