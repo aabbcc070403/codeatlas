@@ -16,3 +16,6 @@ artifacts/screenshots/
 .e2e-dbg-*.cjs
 .e2e-debug.cjs
 .vercel
+
+# P4.2 演示 ZIP(由 pnpm demo:zip 生成,语料见 tests/e2e/helpers.ts,说明见 demo/README.md)
+demo/*.zip

@@ -24,6 +24,7 @@
     "test:integration": "vitest run tests/integration",
     "test:e2e": "playwright test",
     "fixtures:generate": "tsx scripts/generate-fixtures.ts",
+    "demo:zip": "tsx scripts/make-demo-zip.ts",
     "eval": "tsx scripts/evaluate.ts"
   },
   "dependencies": {
