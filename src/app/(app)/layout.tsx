@@ -5,8 +5,9 @@ import { createHash } from 'node:crypto'
 import { getDb } from '@/server/db/client'
 import { SESSION_COOKIE } from '@/server/auth/session'
 import { aiProviderStatus } from '@/server/env'
-import { Compass, FolderKanban, BookOpen, LineChart } from 'lucide-react'
+import { Compass } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
+import { DesktopNav, MobileNav } from '@/components/app-nav'
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const store = await cookies()
@@ -26,35 +27,13 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     <div className="flex min-h-screen flex-col">
       <header className="sticky top-0 z-40 border-b bg-card">
         <div className="mx-auto flex h-14 max-w-7xl items-center gap-4 px-4">
-          <Link href="/projects" className="flex items-center gap-2 font-semibold">
+          <Link href="/projects" className="flex shrink-0 items-center gap-2 whitespace-nowrap font-semibold">
             <Compass className="h-5 w-5 text-primary" />
             <span>CodeAtlas 码鉴</span>
           </Link>
-          <nav className="flex items-center gap-1 text-sm">
-            <Link
-              href="/projects"
-              className="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
-            >
-              <FolderKanban className="h-4 w-4" />
-              项目
-            </Link>
-            <Link
-              href="/knowledge"
-              className="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
-            >
-              <BookOpen className="h-4 w-4" />
-              知识库
-            </Link>
-            <Link
-              href="/evaluation"
-              className="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
-            >
-              <LineChart className="h-4 w-4" />
-              评测
-            </Link>
-          </nav>
-          <div className="ml-auto flex items-center gap-2">
-            <Badge variant={ai.chatReady ? 'ai' : 'muted'} title={
+          <DesktopNav />
+          <div className="ml-auto flex min-w-0 items-center gap-2">
+            <Badge className="block min-w-0 max-w-[100px] shrink truncate sm:max-w-[220px]" variant={ai.chatReady ? 'ai' : 'muted'} title={
               ai.chatReady
                 ? `当前模型：${ai.chatModel}`
                 : '当前使用 Mock provider，未接入真实大模型'
@@ -67,6 +46,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
                 <Badge variant="secondary">管理员</Badge>
               </span>
             )}
+            <MobileNav />
           </div>
         </div>
       </header>
