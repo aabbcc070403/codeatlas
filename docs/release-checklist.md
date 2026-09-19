@@ -85,3 +85,18 @@
 - 交互验收探针(Playwright,390×844):16 项全部 PASS——汉堡可见、菜单含完整标签「项目/知识库/评测」、跳转后自动收起、键盘 Enter 打开/Escape 收起、三页无横向溢出;桌面 1280 原导航可见、汉堡隐藏、无溢出。
 - 截图已重新生成(login/project/projects/scan/finding/compare/evaluation × 1440/1024/390,共 21 张 + 菜单展开存档 `nav-menu-390x844.png`),390px 无逐字换行。
 - **P4.2 演示数据固定**:`pnpm demo:zip` 生成 `demo/codeatlas-demo-origin.zip` 与 `codeatlas-demo-fixed.zip`(各 4 文件,与截图/E2E 流程同源);语料契约由 `tests/unit/demo-corpus.test.ts` 锁定(6 用例);`demo/README.md` 说明与演示脚本的对应关系;ZIP 不入库(`.gitignore: demo/*.zip`),语料为版本化的自有合成代码。
+
+## 10. 发布收尾记录(2026-09-19,公开仓库定稿)
+
+- 记录日期:2026-09-19;记录人:ZCode 会话(公开发布前收尾)。
+- **Git 提交整理**:工作区按功能分组为 5 个提交——`b1e2607`(移动端导航与响应式布局)、`5cb90a4`(Finding 详情页定位滚动/反馈失败提示/窄屏适配修复)、`e4914b9`(Finding 详情页 UI 回归 E2E)、`ad2aecf`(演示语料 ZIP 生成脚本与契约测试)、`245295b`(本清单与 P1/P4 进度记录);初始提交 `355b40f`(2026-09-13)未改写。
+- **GitHub 公开仓库**:`https://github.com/aabbcc070403/codeatlas` 创建并推送 master;`git ls-remote origin` 显示远程 HEAD=refs/heads/master=`245295b`,与本地 HEAD 一致;干净克隆后 `pnpm typecheck` 与 `pnpm lint` 真实执行均通过(exit 0)。
+- **PDF 技术文档**:`deliverables/CodeAtlas-技术文档.pdf`(16 页,约 787KB)生成于 `deliverables/`,所有 AI 评测数字如实标注 Mock,未冒充真实模型结果;HTML 源目录随 PDF 一并入库。
+- **Secrets 扫描(2026-09-19)**:对全部已跟踪文件执行多组 `git grep` 正则(sk- 前缀 20+ 字符 / ghp_/gho_/ghu_/ghs_ GitHub token / AKIA·xox·AIza 云厂商前缀 / 密钥类赋值模式 / PEM 私钥块 / Bearer 串 / 非测试目录 32+ 随机串赋值)。命中项均为脱敏(redact)功能自身的测试 fixture——`tests/unit/import-redact.test.ts` 与 `tests/integration/import.test.ts` 中的 `sk-abcdef…`、`ghp_abcdefg…`(字母序假串,且断言导入后被脱敏)、`AKIAIOSFODNN7EXAMPLE`(AWS 官方文档标准示例密钥)、伪造 PEM 头部(无密钥材料),及 `tests/integration/messages.test.ts` 的 `sk-test-secret-value-123`(测试桩值),人工复核后全部排除,非真实凭证。`.env` 本地存在但被 .gitignore 忽略、未跟踪;`git ls-files` 中敏感模式文件仅 `.env.example`(AI_API_KEY 等均为空占位)。**结论:无真实密钥泄露。**
+- **发布候选 tag**:`v1.0.0-rc.1`(annotated,2026-09-19):核心功能与比赛材料(PDF/文档/演示语料)就绪,真实 AI 评测与 Docker 验收待完成后进入 1.0.0;tag 干净克隆复现验证通过。
+
+### 未完成项(如实保持)
+
+1. 真实 AI 小样本验证与保留集 ×3 评测(P2,需本机凭证)。
+2. Docker/Compose 全栈与生产 PostgreSQL 16 实测(P3,需测试主机)。
+3. MP4 演示视频与在线演示环境(P5 后续项)。

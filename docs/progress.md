@@ -614,3 +614,13 @@
 ### P4 阶段复跑(2026-09-15,最终退出码)
 
 `typecheck` exit 0;`lint` exit 0;`test:unit` exit 0(14 文件 197 用例,含新增 6 契约用例);`test:integration` exit 0(14 文件 127 用例,PGlite socket);`test:e2e` exit 0(8 用例,导航改动后);`build` exit 0;`demo:zip` exit 0;`capture-screenshots` exit 0。本机无 Docker、无真实模型凭证:P2/P3 仍未执行(如实声明)。
+
+---
+
+## 公开发布收尾:提交整理 / GitHub 推送 / PDF / Secrets 扫描(2026-09-19)
+
+- **Git 提交整理**:工作区按功能分组为 5 个提交——`b1e2607` 新增移动端导航与响应式布局优化;`5cb90a4` 修复 Finding 详情页定位滚动、反馈失败提示与窄屏适配;`e4914b9` 新增 Finding 详情页 UI 回归 E2E 测试;`ad2aecf` 新增演示语料 ZIP 生成脚本与契约测试;`245295b` 新增发布检查清单并补充 P1/P4 进度记录。历史提交(含 `355b40f` 初始基线)一律未改写。
+- **GitHub 公开仓库**:https://github.com/aabbcc070403/codeatlas 创建并推送 master;`git ls-remote origin` 显示远程 HEAD=refs/heads/master=`245295b`,与本地一致;干净克隆(临时目录)后 `pnpm typecheck` 与 `pnpm lint` 真实执行均通过,临时目录已删除。
+- **PDF 技术文档**:`deliverables/CodeAtlas-技术文档.pdf` 16 页(约 787KB)生成,全部 AI 评测数字如实标注 Mock;HTML 源目录随 PDF 一并入库。
+- **Secrets 扫描(公开仓库安全检查)**:对全部已跟踪文件执行多组 `git grep` 正则(sk- 前缀 / ghp_/gho_/ghu_/ghs_ GitHub token / AKIA·xox·AIza 云厂商前缀 / 密钥类赋值 / PEM 私钥块 / Bearer 串 / 非测试目录 32+ 随机串)。命中均为脱敏功能自身的测试 fixture(`import-redact.test.ts` 的 `AKIAIOSFODNN7EXAMPLE` AWS 官方示例密钥、字母序假 `ghp_`/`sk-` 串及无密钥材料的伪造 PEM 头;`messages.test.ts` 的 `sk-test-secret-value-123` 测试桩),人工复核排除;`.env` 被 .gitignore 忽略未跟踪,`git ls-files` 敏感模式文件仅 `.env.example` 空占位。**结论:无真实密钥泄露。**
+- **发布候选 tag**:`v1.0.0-rc.1`(annotated,2026-09-19),含本日文档与 deliverables 提交;从 tag 干净克隆复现通过(7 个提交、PDF 与 docs 记录齐全)后清理临时目录。
