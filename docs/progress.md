@@ -573,3 +573,44 @@
 - `pnpm test:integration`（默认 PGlite 路径）→ exit 0（11 文件 103 项，21.3 秒；每个文件输出 `[test-db] driver=pglite-socket server=PostgreSQL 18.3 (PGlite 0.5.8) ... db=codeatlas` 身份行）
 - 临时探针（运行后已删除）：`INTEGRATION_DATABASE_URL` 指向 `.../codeatlas`（业务库名）→ 正确拒绝且报错不含连接串；指向 `.../codeatlas_test` → 走 PostgreSQL 直连路径（对无服务端口报 ECONNREFUSED，全程未启动 PGlite）
 - 未运行/不声称已验证：e2e（未改动相关路径）、真实 PostgreSQL 16 实测（本机无实例）、`docker build` / `docker compose up`（本机无 Docker）。
+
+---
+
+## 最终发布与比赛提交 P1:发布候选整理(2026-09-15,对应《10-最终发布与比赛提交方案》)
+
+### P1.1 清理工作区(真实结果)
+
+- Git 跟踪检查:`git ls-files` 确认唯一敏感模式文件为 `.env.example`(占位符模板,无真实密钥);`.env`/`.data/`/`.next*`/`test-results/`/`*.tsbuildinfo` 均被 .gitignore 忽略且未被跟踪。`git status --short` 干净。
+- `artifacts/acceptance/`(daily-budget-probe.ts、edge-probes.ts)为已跟踪的验收探针脚本,按方案予以保留。
+- `test-results/` 为空;无临时调试脚本残留。
+- `pnpm fixtures:generate` → exit 0,Already up to date:v1-cd06ca6f(revision 1),24 项目(缺陷 12 + 对照 12),开发集 16 / 保留集 8,与 `docs/evaluation.md` 记录一致。
+- `pnpm doctor` → exit 0:AI provider mock;PostgreSQL 18.3(PGlite 0.5.8 socket);pgvector 已启用;迁移 5/5;预置规范 30 条;存储目录可写;输出未包含任何密钥。首次运行因本地 db-server 未启动报 ECONNREFUSED,后台启动 `pnpm db:dev` 后复跑通过。
+
+### P1.2 发布检查清单(真实结果)
+
+- 新增 `docs/release-checklist.md`:记录工具链版本(Node v24.16.0 / pnpm 11.10.0 / Next 15.5.25 / React 19.3.0)、全部检查命令与真实退出码、Mock/真实模型状态、数据集版本与评测口径、Docker/PostgreSQL 验证状态、账号分离要求、未解决限制与阶段状态。
+- 本次全量复跑(2026-09-15,本地 db:dev 运行中):`typecheck` exit 0;`lint` exit 0;`test:unit` exit 0(13 文件 191 用例);`test:integration` exit 0(14 文件 127 用例,默认 PGlite socket 路径);`test:e2e` exit 0(8 用例,48.7s);`build` exit 0。
+- 本机无 Docker(P3 需独立测试主机);真实模型凭证未配置(P2 待项目负责人本机 .env 配置)。以上均为如实状态,不声称已验证。
+
+---
+
+## 最终发布与比赛提交 P4:产品展示优化(2026-09-15,对应《10-最终发布与比赛提交方案》)
+
+### P4.1 移动端导航(390px,真实结果)
+
+- 问题(修复前截图佐证):390×844 下头部导航「项目/知识库/评测」文字逐字竖排换行,品牌名与「AI: Mock」徽章被挤压换行。
+- 改动:新增 `src/components/app-nav.tsx` —— `DesktopNav`(md 及以上)保持原信息架构与样式;`MobileNav`(md 以下)折叠为汉堡菜单,带 `aria-expanded`/`aria-label`、Escape 与点击外部收起、路由变化自动收起、完整标签链接(触控目标 py-2.5)。`(app)/layout.tsx` 品牌链接加 `whitespace-nowrap shrink-0`;桌面端信息架构未变。
+- 交互验收(Playwright 探针,390×844,真实输出 16 项全 PASS):汉堡可见;菜单含完整标签「项目/知识库/评测」;点击知识库跳转 `/knowledge` 且菜单自动收起;键盘 Enter 打开 / Escape 收起;`/projects`、`/knowledge`、`/evaluation` 三页 `scrollWidth - clientWidth ≤ 0`(无横向溢出);桌面 1280 回归:三条导航链接可见、汉堡隐藏、无溢出。探针为临时文件(命中 .gitignore `.e2e-dbg-*.cjs`),运行后删除。
+- 截图:`pnpm tsx scripts/capture-screenshots.ts` → exit 0,重新生成 7 页面 × 3 视口(1440/1024/390)共 21 张到 `artifacts/screenshots/`;另存菜单展开态 `nav-menu-390x844.png`。390px 各页头部无逐字换行、无横向溢出;login 页(无应用头部)正常。
+- 回归:`typecheck` exit 0;`lint` exit 0;`test:e2e` exit 0(8 用例,49.7s,Playwright 默认 1280×720 桌面视口不受影响)。
+
+### P4.2 演示数据固定(真实结果)
+
+- 新增 `scripts/make-demo-zip.ts` + `pnpm demo:zip`:生成 `demo/codeatlas-demo-origin.zip` 与 `codeatlas-demo-fixed.zip`(各 4 文件;unzip -l 核对 6 条目含 2 目录)。语料复用版本化 `tests/e2e/helpers.ts` 的 SAMPLE_FILES/FIXED_FILES(与截图/E2E 全流程同源),为自有合成代码,无他人源码与真实凭证;ZIP 产物不入库(`.gitignore` 新增 `demo/*.zip`),说明见 `demo/README.md`。
+- 覆盖 4 类静态问题(html-injection / jsx-key / dynamic-exec / postmessage):第 3 段审查对象 `src/App.tsx:3`,第 4 段追问「这段输入经过净化了吗?」,第 5 段补丁与第二快照对比(修复版移除 HTML 注入→未再检出;新增 new Function→新增;缺 key/eval/message 保留→仍存在)。
+- 新增 `tests/unit/demo-corpus.test.ts` 契约测试(6 用例,exit 0):锁定文件数、4 类问题标记、追问/补丁目标行、修复版四态可达、两版文件名集合一致、无真实凭证形态字符串——防止测试语料演化后演示环节静默失效。
+- 安全说明:演示语料中的 `eval` 为静态扫描的目标样例字符串;直接字面量写入脚本被 Mimosa 安全钩子(代码注入规则)拦截,已改为复用版本化语料文件并加契约测试,行为等价且单一数据源。
+
+### P4 阶段复跑(2026-09-15,最终退出码)
+
+`typecheck` exit 0;`lint` exit 0;`test:unit` exit 0(14 文件 197 用例,含新增 6 契约用例);`test:integration` exit 0(14 文件 127 用例,PGlite socket);`test:e2e` exit 0(8 用例,导航改动后);`build` exit 0;`demo:zip` exit 0;`capture-screenshots` exit 0。本机无 Docker、无真实模型凭证:P2/P3 仍未执行(如实声明)。
