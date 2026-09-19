@@ -37,9 +37,12 @@ async function shot(page: Page, name: string, mobileTab?: string): Promise<void>
   for (const vp of VIEWPORTS) {
     await page.setViewportSize({ width: vp.width, height: vp.height })
     await page.waitForTimeout(500) // 等待响应式布局稳定
-    if (mobileTab && vp.width < 1024) {
+    if (mobileTab && vp.width < 1280) {
       const tab = page.getByRole('button', { name: mobileTab })
-      if (await tab.isVisible()) await tab.click()
+      if (await tab.isVisible()) {
+        await tab.click()
+        await page.waitForFunction(() => document.querySelector('button[aria-pressed="true"]')?.textContent === '解释')
+      }
     }
     await page.screenshot({ path: path.join(OUT_DIR, `${name}-${vp.width}x${vp.height}.png`) })
     console.log(`[shots] ${name}-${vp.width}x${vp.height}.png`)

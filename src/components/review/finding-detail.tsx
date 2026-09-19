@@ -83,9 +83,11 @@ export function FindingDetail({
   const [list, setList] = useState<FindingListItem[]>([])
   const [tab, setTab] = useState<Tab>('code')
   const [feedbackPending, setFeedbackPending] = useState(false)
+  const [feedbackError, setFeedbackError] = useState<string | null>(null)
   /** 引用定位失败的路径集合：文件不在快照/加载失败/行段越界（追问引用标「待核查」） */
   const [failedPaths, setFailedPaths] = useState<Set<string>>(new Set())
   const codeAnchorRef = useRef<HTMLTableRowElement | null>(null)
+  const codeScrollRef = useRef<HTMLDivElement | null>(null)
   /** 服务端已预取的问题 id：仅首次挂载跳过客户端重复拉取 */
   const prefetchedFindingId = useRef<string | null>(initialFinding?.id ?? null)
   /** 服务端已预取的主引用文件（快照内容不可变，可跨 viewing 切换复用） */
@@ -192,10 +194,18 @@ export function FindingDetail({
 
   // 定位到 primary 起始行
   useEffect(() => {
-    if (file && codeAnchorRef.current) {
-      codeAnchorRef.current.scrollIntoView({ block: 'center' })
+    const container = codeScrollRef.current
+    const anchor = codeAnchorRef.current
+    if (file && container && anchor && container.clientHeight > 0) {
+      const offset = anchor.getBoundingClientRect().top - container.getBoundingClientRect().top
+      container.scrollTop += offset - container.clientHeight / 2 + anchor.clientHeight / 2
     }
-  }, [file, viewing])
+  }, [file, viewing, tab])
+
+  const locateCode = useCallback((ref: { path: string; startLine: number; endLine: number }) => {
+    setViewing(ref)
+    setTab('code')
+  }, [])
 
   /** 当前查看文件中的相关引用行段 */
   const relatedRangesInViewing = useMemo(() => {
@@ -209,17 +219,23 @@ export function FindingDetail({
     async (feedback: 'confirmed' | 'false_positive' | 'unreviewed') => {
       if (!finding) return
       setFeedbackPending(true)
+      setFeedbackError(null)
       try {
         const res = await fetch(`/api/findings/${finding.id}/feedback`, {
           method: 'PATCH',
           headers: { 'content-type': 'application/json' },
           body: JSON.stringify({ feedback }),
         })
-        if (res.ok) {
+        if (!res.ok) {
+          const body = await res.json().catch(() => null)
+          throw new Error(body?.error?.message ?? '反馈保存失败，请重试')
+        } else {
           const body = (await res.json()) as { id: string; feedback: typeof feedback; risk: RiskInfo }
           setFinding({ ...finding, feedback: body.feedback })
           setRisk(body.risk)
         }
+      } catch (err) {
+        setFeedbackError(err instanceof Error ? err.message : '网络异常，反馈未保存，请重试')
       } finally {
         setFeedbackPending(false)
       }
@@ -244,7 +260,7 @@ export function FindingDetail({
   }
 
   return (
-    <div className="flex h-[calc(100vh-3.5rem)] flex-col">
+    <div className="flex h-[calc(100dvh-3.5rem)] min-w-0 flex-col overflow-hidden">
       {/* 顶栏 */}
       <div className="flex flex-wrap items-center gap-2 border-b bg-card px-4 py-2">
         <Link href={`/scans/${scanId}`} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
@@ -266,18 +282,18 @@ export function FindingDetail({
           </>
         )}
         {/* 1024px 以下标签切换 */}
-        <div className="ml-auto flex gap-1 lg:hidden">
+        <div className="ml-auto flex gap-1 xl:hidden">
           {(['list', 'code', 'evidence'] as Tab[]).map((t) => (
-            <Button key={t} size="sm" variant={tab === t ? 'default' : 'ghost'} onClick={() => setTab(t)}>
+            <Button key={t} size="sm" aria-pressed={tab === t} variant={tab === t ? 'default' : 'ghost'} onClick={() => setTab(t)}>
               {{ list: '问题', code: '代码', evidence: '解释' }[t]}
             </Button>
           ))}
         </div>
       </div>
 
-      <div className="grid min-h-0 flex-1 lg:grid-cols-[260px_minmax(0,1fr)_360px]">
+      <div className="grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)] xl:grid-cols-[240px_minmax(0,1fr)_380px]">
         {/* 左：问题列表 */}
-        <aside className={`${tab === 'list' ? 'block' : 'hidden'} min-h-0 overflow-auto border-r bg-card lg:block`}>
+        <aside className={`${tab === 'list' ? 'block' : 'hidden'} min-h-0 min-w-0 overflow-auto overscroll-contain border-r bg-card xl:block`}>
           <p className="px-3 pt-3 text-xs text-muted-foreground">共 {list.length} 项（前 100）</p>
           <ul>
             {list.map((f) => (
@@ -302,7 +318,7 @@ export function FindingDetail({
         </aside>
 
         {/* 中：只读代码 */}
-        <section className={`${tab === 'code' ? 'flex' : 'hidden'} min-h-0 min-w-0 flex-col overflow-hidden lg:flex`}>
+        <section className={`${tab === 'code' ? 'flex' : 'hidden'} min-h-0 min-w-0 flex-col overflow-hidden xl:flex`}>
           {viewing && (
             <div className="flex items-center gap-2 border-b bg-card px-3 py-1.5 text-xs text-muted-foreground">
               <span className="truncate font-mono">{viewing.path}</span>
@@ -316,7 +332,7 @@ export function FindingDetail({
               )}
             </div>
           )}
-          <div className="min-h-0 flex-1 overflow-auto">
+          <div ref={codeScrollRef} className="min-h-0 flex-1 overflow-auto overscroll-contain" data-testid="code-scroll">
             {!finding && (
               <p className="flex items-center gap-2 p-4 text-sm text-muted-foreground">
                 <Loader2 className="h-4 w-4 animate-spin" /> 加载问题…
@@ -329,7 +345,7 @@ export function FindingDetail({
               </div>
             )}
             {finding && file && viewing && (
-              <table className="w-full border-collapse font-mono text-xs">
+              <table className="w-full border-collapse font-mono text-[13px] leading-6">
                 <tbody>
                   {file.content.split('\n').map((line, i) => {
                     const lineNo = i + 1
@@ -364,14 +380,14 @@ export function FindingDetail({
         </section>
 
         {/* 右：证据面板 + 追问 */}
-        <aside className={`${tab === 'evidence' ? 'block' : 'hidden'} min-h-0 overflow-auto border-l bg-card lg:block`}>
+        <aside className={`${tab === 'evidence' ? 'block' : 'hidden'} min-h-0 min-w-0 overflow-auto overscroll-contain border-l bg-card [overflow-wrap:anywhere] xl:block`}>
           {finding ? (
             <div className="space-y-4 p-4">
               <EvidencePanel
                 draft={finding.draft}
                 guidelineCitations={initialGuidelineCitations}
                 viewing={viewing}
-                onLocate={setViewing}
+                onLocate={locateCode}
               />
               <p className="text-xs text-muted-foreground">
                 evidence={finding.evidenceStatus}：仅代表代码引用有效，不代表漏洞已证实。
@@ -380,7 +396,7 @@ export function FindingDetail({
 
               {/* 追问：历史消息 + 输入（刷新后从 GET messages 恢复） */}
               <div className="border-t pt-3">
-                <ConversationPanel findingId={finding.id} onCite={setViewing} invalidPaths={failedPaths} />
+                <ConversationPanel findingId={finding.id} onCite={locateCode} invalidPaths={failedPaths} />
               </div>
 
               {/* 修复补丁提案：diff + 三项验证状态（R06，刷新后从 GET 恢复） */}
@@ -391,6 +407,7 @@ export function FindingDetail({
               {/* 人工反馈 + 风险摘要（PATCH 返回重算结果实时更新） */}
               <div className="space-y-2 border-t pt-3">
                 <p className="text-xs font-medium text-muted-foreground">人工反馈</p>
+                {feedbackError && <p role="alert" className="text-sm text-destructive">{feedbackError}</p>}
                 <div className="flex flex-wrap gap-2">
                   <Button size="sm" variant={finding.feedback === 'confirmed' ? 'default' : 'outline'} disabled={feedbackPending} onClick={() => void submitFeedback('confirmed')}>
                     <Check className="h-3.5 w-3.5" />

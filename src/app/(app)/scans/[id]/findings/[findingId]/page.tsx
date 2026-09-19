@@ -76,6 +76,7 @@ export default async function FindingPage({
     }
     return (
       <FindingDetail
+        key={finding.id}
         findingId={finding.id}
         scanId={row.scanId}
         projectName={projectName}
