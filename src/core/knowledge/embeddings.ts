@@ -1,5 +1,6 @@
 import postgres from 'postgres'
 import { env, aiProviderStatus } from '@/server/env'
+import { createLocalEmbeddingAdapter, isLocalEmbeddingModel } from './embeddings-local'
 import { Budget } from '@/core/review/budget'
 import {
   reserveDailyTokens,
@@ -26,6 +27,8 @@ export interface EmbeddingResult {
 export interface EmbeddingAdapter {
   readonly model: string
   readonly dim: number
+  /** 本地推理（transformers.js）：无付费调用，跳过日额度预留/结算 */
+  readonly isLocal?: boolean
   embed(texts: string[]): Promise<EmbeddingResult>
 }
 
@@ -34,7 +37,16 @@ let cached: EmbeddingAdapter | null | undefined
 export function getEmbeddingAdapter(): EmbeddingAdapter | null {
   if (cached !== undefined) return cached
   const status = aiProviderStatus()
-  if (!status.embeddingReady || !status.embeddingModel) {
+  if (!status.embeddingModel) {
+    cached = null
+    return cached
+  }
+  // 本地嵌入（local:<模型键>）：无需 API 凭证
+  if (isLocalEmbeddingModel(status.embeddingModel)) {
+    cached = createLocalEmbeddingAdapter(status.embeddingModel)
+    return cached
+  }
+  if (!status.embeddingReady) {
     cached = null
     return cached
   }
@@ -102,6 +114,11 @@ export async function embedWithDailyBudget(
 > {
   const adapter = opts?.adapter !== undefined ? opts.adapter : getEmbeddingAdapter()
   if (!adapter) return { status: 'unavailable' }
+  // 本地嵌入无付费调用：跳过日额度预留/结算（同 Mock 口径）
+  if (adapter.isLocal) {
+    const result = await adapter.embed(texts)
+    return { status: 'ok', vectors: result.vectors, model: result.model, dim: result.dim }
+  }
   const inputEstimate = Budget.estimate(texts.join('\n'))
   const reservation = await reserveDailyTokens(sql, inputEstimate)
   if (!reservation) return { status: 'daily_budget_exceeded' }

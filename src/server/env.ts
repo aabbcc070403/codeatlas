@@ -127,7 +127,7 @@ export function aiProviderStatus(): {
     ready,
     missing,
     chatReady: ready && chatModel !== null,
-    embeddingReady: ready && embeddingModel !== null,
+    embeddingReady: embeddingModel !== null && (embeddingModel.startsWith('local:') || ready),
     chatModel,
     embeddingModel,
   }

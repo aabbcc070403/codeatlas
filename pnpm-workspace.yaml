@@ -1,6 +1,9 @@
 allowBuilds:
   esbuild: true
   iconv: true
+  # 本地嵌入走 transformers.js 的 WASM 后端（实测可用），不开启原生构建脚本
+  onnxruntime-node: false
+  protobufjs: false
 # pnpm 11 默认 public-hoist-pattern 为空；ESLint FlatCompat 需从项目根解析
 # eslint-config-next 的插件（react-hooks/@next/react 等），显式恢复公开提升。
 publicHoistPattern:

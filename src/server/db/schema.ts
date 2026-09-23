@@ -2,6 +2,7 @@ import { sql } from 'drizzle-orm'
 import {
   bigserial,
   boolean,
+  customType,
   index,
   integer,
   jsonb,
@@ -10,7 +11,6 @@ import {
   timestamp,
   uniqueIndex,
   uuid,
-  vector,
 } from 'drizzle-orm/pg-core'
 import type {
   Category,
@@ -26,6 +26,9 @@ import type {
   UsageInfo,
 } from '@/core/contracts'
 import type { CoverageInfo } from '@/core/contracts/scan'
+
+/** 无固定维度的 pgvector 列（drizzle 内置 vector() 强制维度）：维度由 embedding_model 决定 */
+const anyVector = customType<{ data: string }>({ dataType: () => 'vector' })
 
 /* ---------- 会话与项目 ---------- */
 
@@ -294,7 +297,9 @@ export const chunks = pgTable(
     heading: text('heading').notNull().default(''),
     startLine: integer('start_line').notNull(),
     endLine: integer('end_line').notNull(),
-    embedding: vector('embedding', { dimensions: 1536 }),
+    /** 向量维度由 embedding_model 决定（本地 bge-small-zh 512 / OpenAI 1536 等），
+     * 列不固定维度；换维度前须重建索引（清空旧向量） */
+    embedding: anyVector('embedding'),
     embeddingModel: text('embedding_model'),
     indexVersion: integer('index_version').notNull().default(1),
     contentHash: text('content_hash').notNull(),
