@@ -86,8 +86,8 @@ docker compose up --build # 本机未验证，见下方「已知限制」
 | `AI_BASE_URL` | OpenAI 兼容接口地址（`AI_PROVIDER=openai` 时必填） | 留空 |
 | `AI_API_KEY` | 模型密钥（`AI_PROVIDER=openai` 时必填；不写入日志与消息） | 留空 |
 | `AI_CHAT_MODEL` | 审查 / 追问 / 补丁用的对话模型名 | 留空 |
-| `AI_EMBEDDING_MODEL` | 规范向量化的嵌入模型名（缺省时检索降级为词法并标注 lexical_only） | 留空 |
-| `EMBEDDING_DIM` | 嵌入维度（须与模型实际输出一致，默认 1536；换模型 / 维度需重建索引版本） | `1536` |
+| `AI_EMBEDDING_MODEL` | 嵌入模型：`local:bge-small-zh-v1.5`（本地 ONNX 零成本，输出 512 维）或 OpenAI 兼容 embedding 模型名；缺省时检索降级为词法并标注 lexical_only | 留空 |
+| `EMBEDDING_DIM` | 嵌入维度（须与模型实际输出一致：本地 bge-small-zh=512 / OpenAI=1536）；换模型 / 维度后运行 `pnpm reindex` 重建向量索引 | `1536` |
 | `AI_DAILY_TOKEN_LIMIT` | 全局日 token 预算（调用前原子预留，达到上限降级静态扫描） | `300000` |
 | `AI_ASK_MAX_MODEL_CALLS` / `AI_ASK_MAX_TOOL_CALLS` / `AI_ASK_WALL_MS` | 追问轮预算可选覆盖（优化策略调参；缺省用规格值 4 次模型 / 8 次工具 / 60s） | 留空 |
 | `DATA_TTL_HOURS` | 会话与项目数据过期小时数（worker 每小时清理；预置样例不受影响） | `24` |
