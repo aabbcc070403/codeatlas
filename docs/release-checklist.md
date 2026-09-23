@@ -101,3 +101,12 @@
 1. 真实 AI 评测遗留(2026-09-19 执行后):embedding 无向量路(hybrid_rag 词法降级口径)、追问预算偏紧(复杂问题 budget_exhausted)、fx-ctl-jsx-02 六次扫描终态 partial 待排查。
 2. Docker/Compose 全栈与生产 PostgreSQL 16 实测(P3,需测试主机)。
 3. MP4 演示视频与在线演示环境(P5 后续项)。
+
+## 11. 产品完善与材料冲刺记录(2026-09-23)
+
+- 记录日期:2026-09-23;本次会话新增 13 个真实提交(8e1dd4f…112562b),历史提交未改写。
+- **产品**:扫描终态语义修复(fx-ctl-jsx-02 partial 根因=证据门丢弃被误计未完成)+ 提示词 v2(P 0.42→0.86 主效应,48/48 completed);安全加固(Mimosa 深审项目代码 0 高危:语料/数据集 JSON 数据化+路径穿越防御+db-server 边界);多模态截图追问(≤3 张,原图不落库);本地嵌入 local:bge-small-zh-v1.5+维度解耦迁移 0005+pnpm reindex,RAG 三路消融(检索 29/29 hybrid);追问预算 AI_ASK_* 可配置;性能实测(FCP ≤188ms,First Load JS ≤136kB)。
+- **评测口径**:v2 三路消融(llm_no_rag 0.857/1.000/0.923、hybrid 词法 0.786/1.000/0.912、hybrid 向量 0.756/1.000/0.850,n=3 均值),与 v1/Mock 分栏并存,如实不夸大(`docs/evaluation.md` §4.6)。
+- **材料**:README 团队信息表/技术架构速览/开发方式声明;技术文档七章重构(11 页 PDF,创新点双清单/商业潜力/AI 选型集成优化显式);演示脚本更新+多模态段;答辩 PPT 11 页+18 题问答题库;PPT 视觉核验通过。
+- **最终回归**:八项命令(fixtures:generate/doctor/typecheck/lint/test:unit 204/test:integration 131/test:e2e 9/build)全部 exit 0。
+- **未完成项更新**:§10-1 的三项遗留(fx-ctl-jsx-02 partial、向量路未验证、追问预算偏紧)**已全部解决**;仍开放——Docker/生产 PG 实测(需测试主机)、MP4 录制(需人工)、在线演示部署、README 团队信息补全、报名缴费与组别确认。

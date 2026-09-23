@@ -649,3 +649,49 @@
 
 - `docs/evaluation.md`:总口径声明改为「真实模型评测已于 2026-09-19 执行」;新增 §4.5 真实模型实测数字(环境/词法降级声明/均值±范围表/RAG 消融/Mock 对照/如实结论/已知异常);§4 Mock 数字与表格一字不动(仅开头加时点标注);§5 第 2 条改写为已执行+新限制。
 - `docs/release-checklist.md`:§3 AI 模型状态、§4 评测口径、§7 未解决限制、§8 阶段状态、§10 收尾记录与未完成项同步更新。
+
+---
+
+## 产品完善与比赛材料冲刺(2026-09-23,按比赛评审维度执行)
+
+### T12 扫描终态 partial 根因与修复(commit 8e1dd4f)
+
+- **根因**(DB 实证):fx-ctl-jsx-02 等全部 partial 均为 `invalid_evidence_dropped`——证据门丢弃幻觉引文本是护栏生效,却被计为「未完成」并降级终态(与规格 193「丢弃并计数」不符);09-19 的 48 次扫描中该原因占全部 partial,零预算耗尽。
+- **修复**:终态语义对齐规格(无效丢弃不降级,degradedReason 标注保留)+ 审查提示词加固(review-prompt-v2「宁缺毋滥,空结论正常」)+ 回归测试。v2 口径 48/48 扫描全部 completed。
+- **副产物**:精度主效应——llm_no_rag P 0.396→0.857,hybrid P 0.421→0.756–0.786,FP 7–11→0–4 条/次,Recall 跨 9 次运行全 1.000。
+
+### 安全加固(commits 64dc368/ee48d49/d706889/a4af474)
+
+- Mimosa 提交门驱动的结构性改造:测试语料 JSON 数据文件化(redact-tokens/code-samples/demo-corpus + 加载器)、评测数据集 files.json 内容数据块 + 路径穿越防御(assertSafeRelPath/resolveInside 边界校验)、db-server 数据目录根边界 + 零外部输入入口、测试基线封闭(vitest 钉死额度与 Mock 基线)。Mimosa 深度审计项目代码 0 高危。
+- 顺带修复:测试套件被开发机 .env 污染(3 个日额度/真实模型用例)与 Playwright Node ESM 对 JSON 导入属性的要求(语料加载改 fs 读取)。
+
+### 多模态截图追问 + 预算可配置(T5/T13,commit 09ef384)
+
+- 追问支持 ≤3 张界面截图(粘贴/上传,mime 白名单、单张 ≤1MB):图像 part 与代码证据、规范检索三源融合;图像按固定 1,100 token 计预算;**原图不落库只存元数据**;Mock 如实标注「已收到截图,不解析图像内容」。`AI_ASK_*` 预算覆盖(优化策略调参口)。集成测试 + E2E 全绿。
+
+### 本地嵌入与 RAG 三路消融(T4,commits 0e94a8a/8b8dc68)
+
+- `local:bge-small-zh-v1.5`(transformers.js ONNX/WASM,512 维,hf-mirror 下载,零 API 成本、跳过日额度);向量维度解耦迁移 0005(drizzle customType vector);`pnpm reindex` 重建索引(30 条预置规范全部向量化)。
+- **向量路实证**:嵌入启用后 retrieve_guidelines 29/29 为 hybrid(此前唯一未验证项闭环)。
+- **v2 三路消融**(各 n=3,holdout):llm_no_rag P 0.857/F1 0.923;hybrid 词法对照 P 0.786/F1 0.912;hybrid 向量+词法 P 0.756/F1 0.850;R 全 1.000。如实结论:RAG 对指标影响在 n=8 方差内不宣称显著,稳定增量为规范引用证据(`deliverables/real-embedding-ablation-2026-09-23.md`)。
+
+### 性能实测与 AI 交互核验(T9,commit ec6e185)
+
+- First Load JS 102–136 kB;`next start`+Chromium 1440×900:/login TTFB 30ms/DCL 44ms/FCP 188ms(本机 loopback 口径)。AI 交互三项(流式 SSE 进度/思考状态可视化/错误边界)逐项证据核验(`deliverables/frontend-perf-and-ai-ux-2026-09-23.md`)。
+
+### 比赛材料(commits 4c09030/3c708f4/e391373/112562b)
+
+- README:团队信息表(占位待队员按报名信息补全)、技术架构速览、开发方式声明(AI 辅助编程合规)、已知限制全面刷新。
+- 技术文档重构为赛题七章(新增需求分析/总结与展望;AI 选型理由/集成方式/优化策略显式成节;创新点技术/应用双清单;社会价值与商业潜力;v2 全部数字),PDF 重新生成 11 页(≤30)。
+- 演示脚本:真实模型口径更新 + 多模态截图演示段(第 4 段)。
+- 答辩材料:11 页 PPT(生成脚本入库可复现;视觉核验通过,修复图表标签取整与收尾页重叠两处缺陷)+ 18 题问答题库(`deliverables/答辩问答题库.md`)。
+
+### 最终签收回归(2026-09-23,真实退出码)
+
+- `fixtures:generate` / `doctor` / `typecheck` / `lint` / `test:unit`(204) / `test:integration`(131) / `test:e2e`(9) / `build` 八项全部 exit 0;测试总数 344。
+
+### 未完成外部项(如实)
+
+1. **MP4 演示视频**:需人工出镜讲解录制(5–8 分钟,脚本与多模态演示段已就绪:docs/demo-script.md)。
+2. **在线演示部署 + 评审账号**:需 Docker 主机/云环境(P3 的 Docker/生产 PG 验收可同机完成)。
+3. README 团队信息占位待补全;报名缴费与组别确认为行政事项(组别报错取消资格,务必核对)。
