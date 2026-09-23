@@ -127,7 +127,7 @@ export async function createTestDb(): Promise<TestDb> {
     try {
       // 动态导入：PostgreSQL 直连路径不加载 PGlite 及其 socket 服务
       const { startDbServer } = await import('../../scripts/db-server')
-      handle = await startDbServer({ dataDir: dir, port, maxConnections: 8 })
+      handle = await startDbServer({ dataDir: dir, rootDir: path.dirname(dir), port, maxConnections: 8 })
     } catch {
       // 端口竞争，重试
     }

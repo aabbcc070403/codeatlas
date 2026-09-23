@@ -1,0 +1,6 @@
+{
+  "package.json": "{\"name\":\"fx-ctl-html-02\",\"private\":true,\"dependencies\":{\"react\":\"^19.0.0\"}}",
+  "README.md": "# fx-ctl-html-02\n\n个人简介卡片组件（安全对照实现）。\n",
+  "src/BioCard.tsx": "export function BioCard({ bio }: { bio: string }) {\n  return <div className=\"bio\">{bio}</div>\n}\n\nexport function TagList({ tags }: { tags: string[] }) {\n  return (\n    <ul>\n      {tags.map((t) => (\n        <li key={t}>{t}</li>\n      ))}\n    </ul>\n  )\n}",
+  "src/index.ts": "export { BioCard, TagList } from './BioCard'\n"
+}

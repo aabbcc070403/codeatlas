@@ -1,0 +1,6 @@
+{
+  "package.json": "{\"name\":\"fx-msg-02\",\"private\":true,\"dependencies\":{}}",
+  "README.md": "# fx-msg-02\n\n主题同步监听模块（评测样例）。\n",
+  "src/listener.ts": "export function listenForTheme(apply: (theme: string) => void): void {\n  window.addEventListener('message', (event) => {\n    const data = event.data as { type?: string; theme?: string }\n    if (data.type === 'theme') apply(data.theme ?? 'light')\n  })\n}",
+  "src/index.ts": "export { listenForTheme } from './listener'\n"
+}

@@ -1,0 +1,6 @@
+{
+  "package.json": "{\"name\":\"fx-ctl-chk-01\",\"private\":true,\"dependencies\":{}}",
+  "README.md": "# fx-ctl-chk-01\n\n配置加载模块（安全对照实现）。\n",
+  "src/config.ts": "export interface AppConfig {\n  port: number\n  host: string\n}\n\nexport function loadConfig(raw: string): AppConfig {\n  const parsed: unknown = JSON.parse(raw)\n  const config = parsed as Partial<AppConfig>\n  // @ts-expect-error 遗留响应缺少 host 字段，等待后端补齐后移除（issue #142）\n  const host = config.host\n  return { port: config.port ?? 8080, host }\n}",
+  "src/index.ts": "export { loadConfig } from './config'\nexport type { AppConfig } from './config'\n"
+}

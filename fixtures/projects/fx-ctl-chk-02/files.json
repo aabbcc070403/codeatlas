@@ -1,0 +1,6 @@
+{
+  "package.json": "{\"name\":\"fx-ctl-chk-02\",\"private\":true,\"dependencies\":{}}",
+  "README.md": "# fx-ctl-chk-02\n\n调试工具模块（安全对照实现）。\n",
+  "src/logger.ts": "export interface LogEntry {\n  level: string\n  message: string\n}\n\nexport interface Logger {\n  info(message: string): void\n  error(message: string): void\n}\n\nexport function createLogger(prefix: string): Logger {\n  const buffer: LogEntry[] = []\n  return {\n    info: (message) => {\n      buffer.push({ level: 'info', message: prefix + ' ' + message })\n    },\n    error: (message) => {\n      buffer.push({ level: 'error', message: prefix + ' ' + message })\n    },\n  }\n}\n\nexport function formatEntries(entries: LogEntry[]): string[] {\n  return entries.map((entry) => '[' + entry.level + '] ' + entry.message)\n}",
+  "src/index.ts": "export { createLogger, formatEntries } from './logger'\nexport type { Logger, LogEntry } from './logger'\n"
+}

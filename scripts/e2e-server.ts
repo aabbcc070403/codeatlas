@@ -26,7 +26,7 @@ async function main(): Promise<void> {
   for (let i = 0; i < 20 && !handle; i++) {
     const port = 25300 + Math.floor(Math.random() * 800)
     try {
-      handle = await startDbServer({ dataDir, port, maxConnections: 8 })
+      handle = await startDbServer({ dataDir, rootDir: path.dirname(dataDir), port, maxConnections: 8 })
     } catch {
       // 端口被占用：换下一个
     }

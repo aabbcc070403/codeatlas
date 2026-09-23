@@ -1,0 +1,6 @@
+{
+  "package.json": "{\"name\":\"fx-hook-02\",\"private\":true,\"dependencies\":{\"react\":\"^19.0.0\"}}",
+  "README.md": "# fx-hook-02\n\n窗口尺寸绑定工具（评测样例）。\n",
+  "src/bindResize.ts": "import { useEffect } from 'react'\n\nexport function bindResizeOnce(): void {\n  useEffect(() => {\n    const onResize = () => undefined\n    window.addEventListener('resize', onResize)\n    return () => window.removeEventListener('resize', onResize)\n  }, [])\n}",
+  "src/index.ts": "export { bindResizeOnce } from './bindResize'\n"
+}

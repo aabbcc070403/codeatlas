@@ -1,0 +1,6 @@
+{
+  "package.json": "{\"name\":\"fx-ctl-dyn-01\",\"private\":true,\"dependencies\":{}}",
+  "README.md": "# fx-ctl-dyn-01\n\n表达式计算模块（安全对照实现）。\n",
+  "src/calculator.ts": "const OPERATORS: Record<string, (a: number, b: number) => number> = {\n  '+': (a, b) => a + b,\n  '-': (a, b) => a - b,\n}\n\nexport function calc(a: number, op: string, b: number): number {\n  const fn = OPERATORS[op]\n  if (!fn) throw new Error('不支持的操作符: ' + op)\n  return fn(a, b)\n}\n\nexport function parseNumber(text: string): number {\n  return JSON.parse(text) as number\n}",
+  "src/index.ts": "export { calc, parseNumber } from './calculator'\n"
+}

@@ -1,0 +1,6 @@
+{
+  "package.json": "{\"name\":\"fx-ctl-hook-02\",\"private\":true,\"dependencies\":{\"react\":\"^19.0.0\"}}",
+  "README.md": "# fx-ctl-hook-02\n\n窗口尺寸绑定工具（安全对照实现）。\n",
+  "src/bindResize.ts": "import { useEffect } from 'react'\n\nexport function useBindResize(onResize: () => void): void {\n  useEffect(() => {\n    window.addEventListener('resize', onResize)\n    return () => window.removeEventListener('resize', onResize)\n  }, [onResize])\n}",
+  "src/index.ts": "export { useBindResize } from './bindResize'\n"
+}

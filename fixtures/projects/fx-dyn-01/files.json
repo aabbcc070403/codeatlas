@@ -1,0 +1,6 @@
+{
+  "package.json": "{\"name\":\"fx-dyn-01\",\"private\":true,\"dependencies\":{}}",
+  "README.md": "# fx-dyn-01\n\n表达式计算模块（评测样例）。\n",
+  "src/expression.ts": "// 按用户输入动态计算表达式（教学示例，遗留实现）\nexport function runExpression(expr: string): unknown {\n  const value = eval(expr)\n  return value\n}\n\nexport function describe(value: unknown): string {\n  return typeof value === 'string' ? value : String(value)\n}",
+  "src/index.ts": "export { runExpression, describe } from './expression'\n"
+}

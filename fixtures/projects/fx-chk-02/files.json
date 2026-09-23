@@ -1,0 +1,7 @@
+{
+  "package.json": "{\"name\":\"fx-chk-02\",\"private\":true,\"dependencies\":{}}",
+  "README.md": "# fx-chk-02\n\n调试工具模块（评测样例）。\n",
+  "src/debug.ts": "export function debugDump(state: unknown): void {\n  // 调试用输出（遗留）\n  console.log('state', state)\n  // 另一处调试输出\n  console.debug('dump', state)\n}\n\nexport function reportError(err: Error): void {\n  console.error('failed', err.message)\n}",
+  "src/legacy-flags.ts": "/* eslint-disable no-eval -- 本模块历史上集中封装动态执行入口 */\nexport function legacyDynamicModule(): boolean {\n  return true\n}",
+  "src/index.ts": "export { debugDump, reportError } from './debug'\nexport { legacyDynamicModule } from './legacy-flags'\n"
+}

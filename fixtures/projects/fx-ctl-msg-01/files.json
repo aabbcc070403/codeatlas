@@ -1,0 +1,6 @@
+{
+  "package.json": "{\"name\":\"fx-ctl-msg-01\",\"private\":true,\"dependencies\":{}}",
+  "README.md": "# fx-ctl-msg-01\n\niframe 高度上报桥（安全对照实现）。\n",
+  "src/bridge.ts": "const PARENT_ORIGIN = 'https://portal.example.com'\n\nexport interface HeightMessage {\n  type: 'height'\n  height: number\n}\n\nexport function sendHeight(height: number): void {\n  window.postMessage({ type: \"height\", height }, PARENT_ORIGIN)\n}",
+  "src/index.ts": "export { sendHeight } from './bridge'\nexport type { HeightMessage } from './bridge'\n"
+}

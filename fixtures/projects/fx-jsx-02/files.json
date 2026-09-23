@@ -1,0 +1,6 @@
+{
+  "package.json": "{\"name\":\"fx-jsx-02\",\"private\":true,\"dependencies\":{\"react\":\"^19.0.0\"}}",
+  "README.md": "# fx-jsx-02\n\n键值行列表组件（评测样例）。\n",
+  "src/RowList.tsx": "export interface Row {\n  id: string\n  label: string\n}\n\nexport function RowList({ rows }: { rows: Row[] }) {\n  return (\n    <div>\n      {rows.map((r) => (\n        <>\n          <dt>{r.label}</dt>\n          <dd>{r.id}</dd>\n        </>\n      ))}\n    </div>\n  )\n}",
+  "src/index.ts": "export { RowList } from './RowList'\nexport type { Row } from './RowList'\n"
+}

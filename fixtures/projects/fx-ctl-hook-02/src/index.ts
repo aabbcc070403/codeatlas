@@ -1,1 +1,0 @@
-export { useBindResize } from './bindResize'

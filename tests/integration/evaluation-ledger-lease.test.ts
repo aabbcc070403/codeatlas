@@ -47,10 +47,16 @@ const CTL_FILE = ['export function add(a, b) {', '  return a + b', '}', '// done
 /** 手工迷你数据集：def-manual（1 标注，静态规则零命中）+ ctl-clean（零标注零命中） */
 function writeMiniDataset(dir: string): string {
   const projectsDir = path.join(dir, 'projects')
-  fs.mkdirSync(path.join(projectsDir, 'def-manual', 'src'), { recursive: true })
-  fs.mkdirSync(path.join(projectsDir, 'ctl-clean', 'src'), { recursive: true })
-  fs.writeFileSync(path.join(projectsDir, 'def-manual', 'src', 'b.js'), DEF_FILE)
-  fs.writeFileSync(path.join(projectsDir, 'ctl-clean', 'src', 'a.js'), CTL_FILE)
+  fs.mkdirSync(path.join(projectsDir, 'def-manual'), { recursive: true })
+  fs.mkdirSync(path.join(projectsDir, 'ctl-clean'), { recursive: true })
+  fs.writeFileSync(
+    path.join(projectsDir, 'def-manual', 'files.json'),
+    JSON.stringify({ 'src/b.js': DEF_FILE }, null, 2) + '\n',
+  )
+  fs.writeFileSync(
+    path.join(projectsDir, 'ctl-clean', 'files.json'),
+    JSON.stringify({ 'src/a.js': CTL_FILE }, null, 2) + '\n',
+  )
   fs.writeFileSync(
     path.join(projectsDir, 'def-manual', 'manifest.json'),
     JSON.stringify(

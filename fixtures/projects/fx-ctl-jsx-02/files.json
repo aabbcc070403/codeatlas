@@ -1,0 +1,6 @@
+{
+  "package.json": "{\"name\":\"fx-ctl-jsx-02\",\"private\":true,\"dependencies\":{\"react\":\"^19.0.0\"}}",
+  "README.md": "# fx-ctl-jsx-02\n\n键值行列表组件（安全对照实现）。\n",
+  "src/RowList.tsx": "import { Fragment } from 'react'\n\nexport interface Row {\n  id: string\n  label: string\n}\n\nexport function RowList({ rows }: { rows: Row[] }) {\n  return (\n    <div>\n      {rows.map((r) => (\n        <Fragment key={r.id}>\n          <dt>{r.label}</dt>\n          <dd>{r.id}</dd>\n        </Fragment>\n      ))}\n    </div>\n  )\n}",
+  "src/index.ts": "export { RowList } from './RowList'\nexport type { Row } from './RowList'\n"
+}

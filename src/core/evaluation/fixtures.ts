@@ -10,6 +10,7 @@ import {
   type FixtureCategoryKey,
   type FixtureProjectDef,
 } from './fixtures-defs'
+import { assertSafeRelPath } from './dataset'
 
 /**
  * 数据集构建与生成（规格 13 / R08）：
@@ -313,7 +314,10 @@ export function readPreviousDataset(dir: string): {
   }
 }
 
-/** 生成 fixtures/ 目录：dataset.json + 每项目 manifest.json + 源文件。内容不变时输出字节级幂等。 */
+/** 生成 fixtures/ 目录：dataset.json + 每项目 manifest.json + files.json 内容数据块。
+ * 样例以数据块（相对路径 → 内容）存放而非展开为源码树：样例是被测功能的
+ * **输入数据**（含故意植入的缺陷形态），且数据块不会被当作项目源码扫描/执行。
+ * 内容不变时输出字节级幂等。 */
 export function generateDataset(dir: string, defs: FixtureProjectDef[] = FIXTURE_PROJECTS): DatasetJson {
   const previous = readPreviousDataset(dir)
   const contentHash = computeContentHash(defs)
@@ -322,13 +326,19 @@ export function generateDataset(dir: string, defs: FixtureProjectDef[] = FIXTURE
 
   fs.mkdirSync(dir, { recursive: true })
   for (const project of build.projects) {
+    assertSafeRelPath(project.id)
     const projectDir = path.join(dir, 'projects', project.id)
     fs.mkdirSync(projectDir, { recursive: true })
+    const blobs: Record<string, string> = {}
     for (const file of project.files) {
-      const filePath = path.join(projectDir, ...file.path.split('/'))
-      fs.mkdirSync(path.dirname(filePath), { recursive: true })
-      fs.writeFileSync(filePath, file.content, 'utf8')
+      assertSafeRelPath(file.path)
+      blobs[file.path] = file.content
     }
+    fs.writeFileSync(
+      path.join(projectDir, 'files.json'),
+      JSON.stringify(blobs, null, 2) + '\n',
+      'utf8',
+    )
     fs.writeFileSync(
       path.join(projectDir, 'manifest.json'),
       JSON.stringify(project.manifest, null, 2) + '\n',

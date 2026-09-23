@@ -1,0 +1,6 @@
+{
+  "package.json": "{\"name\":\"fx-ctl-dyn-02\",\"private\":true,\"dependencies\":{}}",
+  "README.md": "# fx-ctl-dyn-02\n\n公式编译与轮询调度模块（安全对照实现）。\n",
+  "src/schedule.ts": "const FORMULAS: Record<string, (x: number) => number> = {\n  double: (x) => x * 2,\n  square: (x) => x * x,\n}\n\nexport function compileFormula(body: string): (x: number) => number {\n  const handler = FORMULAS[body]\n  if (!handler) throw new Error('不支持的表达式')\n  return handler\n}\n\nexport function schedulePoll(fn: () => void, timeoutMs: number): void {\n  setTimeout(fn, timeoutMs)\n}",
+  "src/index.ts": "export { compileFormula, schedulePoll } from './schedule'\n"
+}

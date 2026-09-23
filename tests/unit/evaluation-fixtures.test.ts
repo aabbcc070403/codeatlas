@@ -12,6 +12,7 @@ import {
   splitOf,
 } from '../../src/core/evaluation/fixtures'
 import { FIXTURE_PROJECTS } from '../../src/core/evaluation/fixtures-defs'
+import { assertSafeRelPath, DatasetNotFoundError, loadDataset } from '../../src/core/evaluation/dataset'
 
 /**
  * fixtures 数据集单测（R08）：幂等、24 项目计数与 16/8 划分、
@@ -183,7 +184,7 @@ describe('生成器幂等与磁盘产物', () => {
     expect(first.size).toBeGreaterThanOrEqual(24)
   })
 
-  it('磁盘产物包含 dataset.json 与每项目 manifest.json + 源文件；manifest.split 与 dataset.split 一致', () => {
+  it('磁盘产物包含 dataset.json 与每项目 manifest.json + files.json 内容数据块；manifest.split 与 dataset.split 一致', () => {
     const dir = makeTempDir()
     const dataset = generateDataset(dir)
     expect(fs.existsSync(path.join(dir, 'dataset.json'))).toBe(true)
@@ -200,8 +201,11 @@ describe('生成器幂等与磁盘产物', () => {
       expect(manifest.split).toBe(summary.split)
       const inSplitList = summary.split === 'dev' ? dataset.split.dev : dataset.split.holdout
       expect(inSplitList).toContain(summary.id)
+      const blobs = JSON.parse(
+        fs.readFileSync(path.join(dir, 'projects', summary.id, 'files.json'), 'utf8'),
+      ) as Record<string, string>
       for (const file of manifest.files) {
-        expect(fs.existsSync(path.join(dir, 'projects', summary.id, ...file.split('/'))), `${file} 缺失`).toBe(true)
+        expect(typeof blobs[file], `${file} 缺失`).toBe('string')
       }
     }
   })
@@ -217,12 +221,15 @@ describe('生成器幂等与磁盘产物', () => {
         files: string[]
         annotations: Array<{ file: string; category: string; startLine: number; endLine: number }>
       }
+      const blobs = JSON.parse(
+        fs.readFileSync(path.join(dir, 'projects', summary.id, 'files.json'), 'utf8'),
+      ) as Record<string, string>
       const result = runStaticRules(
         manifest.files
           .filter((f) => f.endsWith('.ts') || f.endsWith('.tsx'))
           .map((f) => ({
             path: f,
-            content: fs.readFileSync(path.join(dir, 'projects', summary.id, ...f.split('/')), 'utf8'),
+            content: blobs[f]!,
             language: f.endsWith('.tsx') ? 'tsx' : 'ts',
             parseOk: true,
             redactedRanges: [],
@@ -242,8 +249,31 @@ describe('生成器幂等与磁盘产物', () => {
   })
 })
 
-describe('datasetVersion 内容哈希版本化', () => {
-  it('内容哈希不变 → 版本与 revision 不变（幂等）', () => {
+describe('数据集路径防御（纵深安全）', () => {
+  it('assertSafeRelPath 拒绝穿越 / 绝对路径 / 盘符 / 反斜杠 / 空段', () => {
+    expect(() => assertSafeRelPath('src/a.ts')).not.toThrow()
+    expect(() => assertSafeRelPath('package.json')).not.toThrow()
+    expect(() => assertSafeRelPath('')).toThrow(DatasetNotFoundError)
+    expect(() => assertSafeRelPath('../x')).toThrow(DatasetNotFoundError)
+    expect(() => assertSafeRelPath('a/../../x')).toThrow(DatasetNotFoundError)
+    expect(() => assertSafeRelPath('/etc/passwd')).toThrow(DatasetNotFoundError)
+    expect(() => assertSafeRelPath('C:\\x')).toThrow(DatasetNotFoundError)
+    expect(() => assertSafeRelPath('a\\b')).toThrow(DatasetNotFoundError)
+    expect(() => assertSafeRelPath('a//b')).toThrow(DatasetNotFoundError)
+  })
+
+  it('loadDataset 拒绝 manifest 中的越界路径', async () => {
+    const dir = makeTempDir()
+    generateDataset(dir)
+    const manifestPath = path.join(dir, 'projects', 'fx-dyn-01', 'manifest.json')
+    const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8')) as { files: string[] }
+    manifest.files = ['../../../../etc/passwd']
+    fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + '\n')
+    await expect(loadDataset(dir)).rejects.toThrow(DatasetNotFoundError)
+  })
+})
+
+describe('datasetVersion 内容哈希版本化', () => {  it('内容哈希不变 → 版本与 revision 不变（幂等）', () => {
     const hash = computeContentHash(FIXTURE_PROJECTS)
     const previous = { version: 'v7-abcd1234', revision: 7, contentHash: hash }
     const next = computeDatasetVersion(hash, previous)

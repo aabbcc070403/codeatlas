@@ -1,0 +1,6 @@
+{
+  "package.json": "{\"name\":\"fx-msg-01\",\"private\":true,\"dependencies\":{}}",
+  "README.md": "# fx-msg-01\n\niframe 高度上报桥（评测样例）。\n",
+  "src/bridge.ts": "export interface HeightMessage {\n  type: 'height'\n  height: number\n}\n\nexport function sendHeight(height: number): void {\n  window.postMessage({ type: 'height', height }, '*')\n}",
+  "src/index.ts": "export { sendHeight } from './bridge'\nexport type { HeightMessage } from './bridge'\n"
+}

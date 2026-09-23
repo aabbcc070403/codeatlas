@@ -1,0 +1,6 @@
+{
+  "package.json": "{\"name\":\"fx-hook-01\",\"private\":true,\"dependencies\":{\"react\":\"^19.0.0\"}}",
+  "README.md": "# fx-hook-01\n\n筛选器组件（评测样例）。\n",
+  "src/Filters.tsx": "import { useState } from 'react'\n\nexport function Filters({ items }: { items: string[] }) {\n  const [query, setQuery] = useState('')\n  if (items.length > 10) {\n    const [page, setPage] = useState(1)\n    void setPage\n  }\n  return <input value={query} onChange={(e) => setQuery(e.target.value)} />\n}",
+  "src/index.ts": "export { Filters } from './Filters'\n"
+}

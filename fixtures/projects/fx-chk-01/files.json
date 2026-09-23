@@ -1,0 +1,6 @@
+{
+  "package.json": "{\"name\":\"fx-chk-01\",\"private\":true,\"dependencies\":{}}",
+  "README.md": "# fx-chk-01\n\n配置加载模块（评测样例）。\n",
+  "src/config.ts": "export function loadPort(raw: string): number {\n  const config = JSON.parse(raw) as { port?: number }\n  const port = config.port\n  // @ts-ignore\n  return port\n}",
+  "src/index.ts": "export { loadPort } from './config'\n"
+}

@@ -1,0 +1,6 @@
+{
+  "package.json": "{\"name\":\"fx-ctl-msg-02\",\"private\":true,\"dependencies\":{}}",
+  "README.md": "# fx-ctl-msg-02\n\n主题同步监听模块（安全对照实现）。\n",
+  "src/listener.ts": "const ALLOWED_ORIGINS = ['https://portal.example.com']\n\nexport function listenForTheme(apply: (theme: string) => void): void {\n  window.addEventListener('message', (event) => {\n    if (!ALLOWED_ORIGINS.includes(event.origin)) return\n    const data = event.data as { type?: string; theme?: string }\n    if (data.type === 'theme') apply(data.theme ?? 'light')\n  })\n}",
+  "src/index.ts": "export { listenForTheme } from './listener'\n"
+}

@@ -1,0 +1,6 @@
+{
+  "package.json": "{\"name\":\"fx-ctl-jsx-01\",\"private\":true,\"dependencies\":{\"react\":\"^19.0.0\"}}",
+  "README.md": "# fx-ctl-jsx-01\n\n用户列表组件（安全对照实现）。\n",
+  "src/UserList.tsx": "export interface User {\n  id: string\n  name: string\n}\n\nexport function UserList({ users }: { users: User[] }) {\n  return (\n    <ul>\n      {users.map((u) => (\n        <li key={u.id}>{u.name}</li>\n      ))}\n    </ul>\n  )\n}",
+  "src/index.ts": "export { UserList } from './UserList'\nexport type { User } from './UserList'\n"
+}

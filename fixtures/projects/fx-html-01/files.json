@@ -1,0 +1,6 @@
+{
+  "package.json": "{\"name\":\"fx-html-01\",\"private\":true,\"dependencies\":{}}",
+  "README.md": "# fx-html-01\n\n评论渲染模块（评测样例）。\n",
+  "src/render.ts": "export function renderComment(el: HTMLElement, html: string): void {\n  el.innerHTML = html\n}\n\nexport function renderCount(el: HTMLElement, count: number): void {\n  el.textContent = String(count)\n}",
+  "src/index.ts": "export { renderComment, renderCount } from './render'\n"
+}

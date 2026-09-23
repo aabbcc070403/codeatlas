@@ -1,0 +1,6 @@
+{
+  "package.json": "{\"name\":\"fx-dyn-02\",\"private\":true,\"dependencies\":{}}",
+  "README.md": "# fx-dyn-02\n\n公式编译与轮询调度模块（评测样例）。\n",
+  "src/schedule.ts": "// 将字符串编译为函数（遗留实现）\nexport function compileFormula(body: string): (x: number) => number {\n  const factory = new Function('x', 'return x * ' + body)\n  return factory as (x: number) => number\n}\n\nexport function schedulePoll(timeoutMs: number): void {\n  // 遗留代码：以字符串形式传参\n  setTimeout('pollServer()', timeoutMs)\n}",
+  "src/index.ts": "export { compileFormula, schedulePoll } from './schedule'\n"
+}
