@@ -24,6 +24,9 @@ export const DEFAULT_BUDGET: BudgetConfig = {
   wallMs: 180_000,
 }
 
+/** 单张图像的保守 token 估算（主流 VL 模型图像输入 ~1k token 量级） */
+export const IMAGE_TOKEN_ESTIMATE = 1100
+
 export class Budget {
   readonly config: BudgetConfig
   private readonly startedAt = Date.now()
@@ -56,6 +59,28 @@ export class Budget {
       }
     }
     return Math.ceil(wide + (text.length - wide) / 4)
+  }
+
+  /**
+   * 消息输入估算（多模态感知）：文本按 estimate，图像附件按固定 token 计——
+   * 用 base64 长度折算会把一张 1MB 截图估成 ~35 万 token，与真实 VL 计费脱节。
+   */
+  static estimateMessages(messages: Array<{ role: string; content: unknown }>): number {
+    let total = 0
+    let images = 0
+    for (const m of messages) {
+      if (typeof m.content === 'string') {
+        total += Budget.estimate(m.content)
+        continue
+      }
+      if (Array.isArray(m.content)) {
+        for (const part of m.content as Array<{ type?: string }>) {
+          if (part.type === 'image') images++
+          else total += Budget.estimate(JSON.stringify(part))
+        }
+      }
+    }
+    return total + images * IMAGE_TOKEN_ESTIMATE
   }
 
   /**

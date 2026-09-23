@@ -48,6 +48,19 @@ const envSchema = z.object({
   AI_EMBEDDING_MODEL: z.string().optional(),
   EMBEDDING_DIM: z.coerce.number().int().default(1536),
   AI_DAILY_TOKEN_LIMIT: z.coerce.number().int().default(300_000),
+  /** 追问轮预算的可选覆盖（优化策略）；未设置时用规格默认 4/8/60s */
+  AI_ASK_MAX_MODEL_CALLS: z.preprocess(
+    (v) => (v === '' || v === undefined ? undefined : v),
+    z.coerce.number().int().positive().optional(),
+  ),
+  AI_ASK_MAX_TOOL_CALLS: z.preprocess(
+    (v) => (v === '' || v === undefined ? undefined : v),
+    z.coerce.number().int().positive().optional(),
+  ),
+  AI_ASK_WALL_MS: z.preprocess(
+    (v) => (v === '' || v === undefined ? undefined : v),
+    z.coerce.number().int().positive().optional(),
+  ),
   DATA_TTL_HOURS: z.coerce.number().default(24),
   APP_ORIGIN: z.string().optional(),
 })
@@ -67,6 +80,9 @@ const parsed = envSchema.parse({
   AI_EMBEDDING_MODEL: process.env.AI_EMBEDDING_MODEL,
   EMBEDDING_DIM: process.env.EMBEDDING_DIM,
   AI_DAILY_TOKEN_LIMIT: process.env.AI_DAILY_TOKEN_LIMIT,
+  AI_ASK_MAX_MODEL_CALLS: process.env.AI_ASK_MAX_MODEL_CALLS,
+  AI_ASK_MAX_TOOL_CALLS: process.env.AI_ASK_MAX_TOOL_CALLS,
+  AI_ASK_WALL_MS: process.env.AI_ASK_WALL_MS,
   DATA_TTL_HOURS: process.env.DATA_TTL_HOURS,
   APP_ORIGIN: process.env.APP_ORIGIN,
 })

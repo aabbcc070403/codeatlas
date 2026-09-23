@@ -49,8 +49,7 @@ export type ModelCallOutcome =
 
 export async function callModelWithBudget(opts: ModelCallOptions): Promise<ModelCallOutcome> {
   const inputEstimate =
-    Budget.estimate(opts.messages.map((m) => JSON.stringify(m)).join('')) +
-    Budget.estimate(opts.system)
+    Budget.estimateMessages(opts.messages) + Budget.estimate(opts.system)
   const prepared = opts.budget.prepareModelCall(inputEstimate, opts.desiredOutputTokens)
   if (!prepared.ok) return { kind: 'scan_budget_exhausted' }
 

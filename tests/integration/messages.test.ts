@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import { NextRequest } from 'next/server'
+import { z } from 'zod'
 import crypto from 'node:crypto'
 import fs from 'node:fs'
 import os from 'node:os'
@@ -14,6 +15,7 @@ import {
   loadOwnedFindingContext,
   type AskFindingQuestionInput,
 } from '../../src/core/review/conversation'
+import { imageAttachmentSchema, MAX_IMAGES_PER_MESSAGE } from '../../src/core/contracts/conversation'
 import type {
   ChatProvider,
   ProviderChatOptions,
@@ -698,5 +700,73 @@ describe('R05 追问服务：Provider 标签与泄漏防护', () => {
     await expect(loadOwnedFindingContext(db.sql, ownerSessionId, presetFindingId)).rejects.toMatchObject({
       status: 404,
     })
+  })
+})
+
+describe('R05 追问多模态（截图附件）', () => {
+  class CaptureProvider implements ChatProvider {
+    readonly id = 'test-vl'
+    readonly isMock = false
+    readonly ready = true
+    captured: ProviderChatOptions | null = null
+    async chat(opts: ProviderChatOptions): Promise<ProviderResult> {
+      this.captured = opts
+      return {
+        text: '',
+        toolCalls: [
+          {
+            id: 'ans-1',
+            name: 'submit_answer',
+            args: { answer: '结合截图与代码证据的回答', citations: [], guidelineChunkIds: [] },
+          },
+        ],
+        usage: { inputTokens: 100, outputTokens: 20 },
+      }
+    }
+  }
+
+  // 1×1 透明 PNG（真实图像字节，非凭证/代码形态）
+  const TINY_PNG_BASE64 =
+    'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=='
+
+  it('图像随首轮消息进入模型上下文；服务端只存元数据不存原图', async () => {
+    const provider = new CaptureProvider()
+    const outcome = await ask({
+      images: [{ mime: 'image/png', name: 'ui.png', dataBase64: TINY_PNG_BASE64 }],
+      provider,
+    })
+    // 无引用提交 → 证据不足（诚实标注，不冒充回答）
+    expect(outcome.status).toBe('insufficient_evidence')
+    const first = provider.captured!.messages[0]!
+    const parts = (
+      typeof first.content === 'string' ? [{ type: 'text' }] : (first.content as Array<{ type: string; image?: string }>)
+    )
+    expect(parts.some((p) => p.type === 'image' && (p.image ?? '').startsWith('data:image/png;base64,'))).toBe(true)
+    const rows = (await db.sql`select usage_json from messages where id = ${outcome.userMessageId}`) as unknown as Array<{
+      usage_json: unknown
+    }>
+    const meta = rows[0]!.usage_json as { images?: Array<{ mime: string; name?: string; bytes: number }> }
+    expect(meta.images).toHaveLength(1)
+    expect(meta.images![0]!.mime).toBe('image/png')
+    expect(meta.images![0]!.name).toBe('ui.png')
+    expect(meta.images![0]!.bytes).toBeGreaterThan(0)
+    // 原图 base64 不落库
+    expect(JSON.stringify(rows[0]!.usage_json)).not.toContain(TINY_PNG_BASE64)
+  })
+
+  it('Mock 应答标注截图接收（多模态流程演示，非真实模型）', async () => {
+    const outcome = await ask({
+      images: [{ mime: 'image/png', dataBase64: TINY_PNG_BASE64 }],
+    })
+    expect(outcome.usage.provider).toBe('mock')
+    expect(outcome.answer).toContain('截图')
+  })
+
+  it('附件合同：数量上限、mime 白名单、base64 校验', () => {
+    const arr = z.array(imageAttachmentSchema).max(MAX_IMAGES_PER_MESSAGE)
+    expect(arr.safeParse(Array.from({ length: 4 }, () => ({ mime: 'image/png', dataBase64: TINY_PNG_BASE64 }))).success).toBe(false)
+    expect(arr.safeParse([{ mime: 'application/x-sh', dataBase64: TINY_PNG_BASE64 }]).success).toBe(false)
+    expect(arr.safeParse([{ mime: 'image/png', dataBase64: 'not base64 !!!' }]).success).toBe(false)
+    expect(arr.safeParse([{ mime: 'image/png', dataBase64: TINY_PNG_BASE64 }]).success).toBe(true)
   })
 })

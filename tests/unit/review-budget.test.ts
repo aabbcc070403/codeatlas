@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { Budget, DEFAULT_BUDGET } from '../../src/core/review/budget'
+import { Budget, DEFAULT_BUDGET, IMAGE_TOKEN_ESTIMATE } from '../../src/core/review/budget'
 
 describe('R04 预算估算', () => {
   it('中文按 ~1 token/字（比 4 字符/token 保守）', () => {
@@ -20,6 +20,31 @@ describe('R04 预算估算', () => {
 
   it('全角形式按宽字符计', () => {
     expect(Budget.estimate('（）')).toBe(2)
+  })
+})
+
+describe('多模态消息估算（图像按固定 token 计）', () => {
+  it('图像附件按 IMAGE_TOKEN_ESTIMATE 计，不按 base64 长度折算', () => {
+    const huge = 'A'.repeat(400_000) // 约 1MB 量级 base64
+    const est = Budget.estimateMessages([
+      {
+        role: 'user',
+        content: [
+          { type: 'text', text: 'hi' },
+          { type: 'image', image: `data:image/png;base64,${huge}` },
+        ],
+      },
+    ])
+    expect(est).toBeGreaterThanOrEqual(IMAGE_TOKEN_ESTIMATE)
+    expect(est).toBeLessThan(IMAGE_TOKEN_ESTIMATE + 100) // 远低于 base64 折算的 ~10 万
+  })
+
+  it('文本口径与 estimate 一致；多张图像线性累加', () => {
+    expect(Budget.estimateMessages([{ role: 'user', content: 'abcd' }])).toBe(1)
+    const two = Budget.estimateMessages([
+      { role: 'user', content: [{ type: 'image', image: 'x' }, { type: 'image', image: 'y' }] },
+    ])
+    expect(two).toBe(2 * IMAGE_TOKEN_ESTIMATE)
   })
 })
 

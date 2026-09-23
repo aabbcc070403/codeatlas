@@ -1,10 +1,17 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { AlertTriangle, BookOpen, Loader2, SendHorizontal, ShieldQuestion } from 'lucide-react'
+import Image from 'next/image'
+import { AlertTriangle, BookOpen, ImagePlus, Loader2, SendHorizontal, ShieldQuestion, X } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { MAX_QUESTION_LENGTH, type MessageStatus } from '@/core/contracts/conversation'
+import {
+  IMAGE_MIME_TYPES,
+  MAX_IMAGES_PER_MESSAGE,
+  MAX_QUESTION_LENGTH,
+  type ImageAttachment,
+  type MessageStatus,
+} from '@/core/contracts/conversation'
 import type { MessageRow } from '@/server/queries/messages'
 
 /**
@@ -38,7 +45,41 @@ export function ConversationPanel({ findingId, onCite, invalidPaths }: Conversat
   const [input, setInput] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<ErrorState>(null)
+  const [images, setImages] = useState<ImageAttachment[]>([])
   const listRef = useRef<HTMLDivElement | null>(null)
+  const fileInputRef = useRef<HTMLInputElement | null>(null)
+
+  /** 追加图像附件（粘贴/选择）：mime 白名单 + 单张 ≤1MB + 最多 3 张 */
+  const addFiles = useCallback((files: FileList | File[]) => {
+    const allowed = new Set<string>(IMAGE_MIME_TYPES)
+    for (const file of Array.from(files)) {
+      if (!allowed.has(file.type)) {
+        setError({ code: 'invalid_request', message: '仅支持 png/jpeg/webp/gif 截图' })
+        continue
+      }
+      if (file.size > 1_000_000) {
+        setError({ code: 'invalid_request', message: '截图单张 ≤1MB' })
+        continue
+      }
+      void new Promise<string>((resolve, reject) => {
+        const reader = new FileReader()
+        reader.onload = () => resolve(String(reader.result).split(',')[1] ?? '')
+        reader.onerror = () => reject(new Error('read failed'))
+        reader.readAsDataURL(file)
+      })
+        .then((dataBase64) => {
+          setImages((prev) =>
+            prev.length >= MAX_IMAGES_PER_MESSAGE
+              ? prev
+              : [
+                  ...prev,
+                  { mime: file.type as ImageAttachment['mime'], name: file.name, dataBase64 },
+                ],
+          )
+        })
+        .catch(() => setError({ code: 'invalid_request', message: '截图读取失败' }))
+    }
+  }, [])
 
   const load = useCallback(async () => {
     try {
@@ -69,10 +110,16 @@ export function ConversationPanel({ findingId, onCite, invalidPaths }: Conversat
       const res = await fetch(`/api/findings/${findingId}/messages`, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ text }),
+        body: JSON.stringify({
+          text,
+          ...(images.length > 0
+            ? { images: images.map(({ mime, name, dataBase64 }) => ({ mime, name, dataBase64 })) }
+            : {}),
+        }),
       })
       if (res.ok) {
         setInput('')
+        setImages([])
       } else {
         const body = (await res.json().catch(() => null)) as
           | { error?: { code?: string; message?: string } }
@@ -96,7 +143,7 @@ export function ConversationPanel({ findingId, onCite, invalidPaths }: Conversat
     } finally {
       setSubmitting(false)
     }
-  }, [findingId, input, load, submitting])
+  }, [findingId, images, input, load, submitting])
 
   return (
     <div className="space-y-2" data-testid="conversation-panel">
@@ -123,6 +170,11 @@ export function ConversationPanel({ findingId, onCite, invalidPaths }: Conversat
             <div key={m.id} className="rounded-md bg-accent/60 px-3 py-2">
               <p className="mb-0.5 text-[11px] font-medium text-muted-foreground">你</p>
               <p className="whitespace-pre-wrap break-words text-sm leading-relaxed">{m.text}</p>
+              {m.usage?.images && m.usage.images.length > 0 && (
+                <p className="mt-1 text-[11px] text-muted-foreground">
+                  附 {m.usage.images.length} 张截图（原图未持久化）
+                </p>
+              )}
             </div>
           ) : (
             <AnswerMessage key={m.id} message={m} onCite={onCite} invalidPaths={invalidPaths} />
@@ -140,16 +192,47 @@ export function ConversationPanel({ findingId, onCite, invalidPaths }: Conversat
 
       {/* 输入区 */}
       <div className="space-y-1.5">
+        {images.length > 0 && (
+          <div className="flex flex-wrap gap-1.5" data-testid="conv-images">
+            {images.map((im, i) => (
+              <span key={`${im.name ?? 'img'}-${i}`} className="relative inline-flex">
+                <Image
+                  src={`data:${im.mime};base64,${im.dataBase64}`}
+                  alt={im.name ?? `截图 ${i + 1}`}
+                  width={56}
+                  height={56}
+                  unoptimized
+                  className="h-14 w-14 rounded-md border object-cover"
+                />
+                <button
+                  type="button"
+                  aria-label={`移除截图 ${i + 1}`}
+                  className="absolute -right-1 -top-1 rounded-full border bg-background p-0.5"
+                  onClick={() => setImages((prev) => prev.filter((_, j) => j !== i))}
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </span>
+            ))}
+          </div>
+        )}
         <textarea
           data-testid="conv-input"
           aria-label="追问输入"
           value={input}
           rows={2}
           maxLength={MAX_QUESTION_LENGTH}
-          placeholder="例如：这段输入经过净化了吗？"
+          placeholder="例如：这段输入经过净化了吗？（可 Ctrl+V 粘贴界面截图）"
           disabled={submitting}
           className="w-full resize-none rounded-md border bg-background px-2.5 py-2 text-sm outline-none focus:ring-1 focus:ring-primary disabled:opacity-60"
           onChange={(e) => setInput(e.target.value)}
+          onPaste={(e) => {
+            const files = Array.from(e.clipboardData.files).filter((f) => f.type.startsWith('image/'))
+            if (files.length > 0) {
+              e.preventDefault()
+              addFiles(files)
+            }
+          }}
           onKeyDown={(e) => {
             if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
               e.preventDefault()
@@ -158,9 +241,33 @@ export function ConversationPanel({ findingId, onCite, invalidPaths }: Conversat
           }}
         />
         <div className="flex items-center justify-between">
-          <p className="text-[11px] text-muted-foreground">
-            {input.trim().length}/{MAX_QUESTION_LENGTH}（Enter 提交，Shift+Enter 换行）
-          </p>
+          <div className="flex items-center gap-1.5">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept={IMAGE_MIME_TYPES.join(',')}
+              multiple
+              className="hidden"
+              onChange={(e) => {
+                if (e.target.files) addFiles(e.target.files)
+                e.target.value = ''
+              }}
+            />
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              data-testid="conv-attach"
+              disabled={submitting || images.length >= MAX_IMAGES_PER_MESSAGE}
+              onClick={() => fileInputRef.current?.click()}
+            >
+              <ImagePlus className="h-3.5 w-3.5" />
+              截图
+            </Button>
+            <p className="text-[11px] text-muted-foreground">
+              {input.trim().length}/{MAX_QUESTION_LENGTH}（Enter 提交，Shift+Enter 换行）
+            </p>
+          </div>
           <Button
             size="sm"
             data-testid="conv-submit"
@@ -180,6 +287,9 @@ export function ConversationPanel({ findingId, onCite, invalidPaths }: Conversat
             )}
           </Button>
         </div>
+        <p className="text-[11px] text-muted-foreground">
+          截图随问题发送给 AI 以理解界面问题（原图不落库）；请避免截取含密钥的区域。
+        </p>
         {submitting && (
           <p className="text-[11px] text-muted-foreground">
             回答引用均经过证据校验；未读取的代码不会作为引用，超时已产生的问题会保留。
