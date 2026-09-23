@@ -102,4 +102,4 @@ export interface RiskInfo {
 }
 
 export const SCAN_RULE_VERSION = 'static-rules-v1'
-export const PROMPT_VERSION = 'review-prompt-v1'
+export const PROMPT_VERSION = 'review-prompt-v2'

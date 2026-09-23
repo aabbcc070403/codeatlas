@@ -107,6 +107,7 @@ const AI_DEGRADED_LABEL: Record<string, string> = {
   budget_exceeded: '预算耗尽，已保留已有结果',
   daily_budget_exceeded: '日额度耗尽，已降级为静态扫描',
   lexical_only: '嵌入不可用，规范检索退化为词法匹配',
+  invalid_evidence_dropped: '部分引文校验未通过，已丢弃并计入统计（不影响完成状态）',
   not_configured: '未配置云端 AI',
 }
 

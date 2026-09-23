@@ -347,6 +347,39 @@ describe('R04 AI 阶段：证据与预算故障矩阵', () => {
     expect(outcome.invalidCount).toBe(1)
   })
 
+  it('证据门丢弃无效引文不影响终态：completed + 标注保留 + 台账计数（规格 193）', async () => {
+    const scanId = await createScanRow()
+    const provider = new ScriptedProvider([
+      ...readRetrieveSubmitScript(() => ({
+        findings: [
+          {
+            title: '伪造结论',
+            category: 'security',
+            severity: 'high',
+            confidence: 0.9,
+            primary: { path: 'src/a.js', startLine: 1, endLine: 3, quote: 'fake' },
+            related: [],
+            condition: 'c',
+            impact: 'i',
+            reasoningSummary: 'r',
+            recommendation: 'm',
+            guidelineChunkIds: [],
+          },
+        ],
+      })),
+      // 修复轮：不提交（保留前轮无有效结果）
+      () => ({ text: '无法修复', toolCalls: [], usage: { inputTokens: 300, outputTokens: 20 } }),
+    ])
+    const outcome = await runAiReviewStage(db.sql, { ...baseCtx, scanId, snapshotId, projectId, provider })
+    expect(outcome.invalidCount).toBe(1)
+    expect(outcome.invalidDropped).toHaveLength(1)
+    // 证据门拦截幻觉 = 护栏生效，不是管线未完成；终态与完整性不受影响
+    expect(outcome.status).toBe('completed')
+    expect(outcome.coverageAi.completed).toBe(true)
+    // 透明标注保留：报告/界面可见丢弃事实，评测照常计入 FP
+    expect(outcome.coverageAi.degradedReason).toBe('invalid_evidence_dropped')
+  })
+
   it('规范引用白名单：知识库中存在但本轮未检索返回的 chunk → invalid', async () => {
     const scanId = await createScanRow()
     const allChunkIds = ((await db.sql`select id from chunks`) as unknown as Array<{ id: string }>).map((r) => r.id)

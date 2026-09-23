@@ -444,7 +444,8 @@ export async function processScanJob(
       staticCheckedFiles: staticResult.checkedFileCount,
       ai: aiInfo,
     }
-    // 终态（R01）：纯静态 completed；云端阶段确实完成才 completed；
+    // 终态（R01）：纯静态 completed；云端阶段未被预算/取消/错误打断即 completed
+    // （证据门丢弃无效引文属护栏生效，单独计数不降级，规格 193）；
     // 失败、预算耗尽、未配置或未完成 → partial（cancelled 已在阶段边界单独处理）
     const finalStatus: 'completed' | 'partial' = config?.enableCloudAI
       ? aiStatus === 'completed'
