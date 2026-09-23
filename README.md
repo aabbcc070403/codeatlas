@@ -1,8 +1,39 @@
 # CodeAtlas 码鉴
 
-**证据驱动的 AI 项目体检**：上传 ZIP 代码包，运行确定性静态规则与受预算约束的 AI 审查，每条问题都带可核验的路径 / 行号 / 引文证据，支持追问、单文件补丁提案、报告导出与快照对比。面向完成课程设计、竞赛项目或首个 Web 产品的学生与小团队。
+**证据驱动的 AI 项目体检**：上传 ZIP 代码包，运行确定性静态规则与受预算约束的 AI 审查，每条问题都带可核验的路径 / 行号 / 引文证据，支持追问（可附界面截图，多模态）、单文件补丁提案、报告导出与快照对比。面向完成课程设计、竞赛项目或首个 Web 产品的学生与小团队。
 
 > 产品不宣称「证明代码安全」「发现全部 Bug」或「自动修复成功」。静态命中、AI 推断、语法检查与真实测试结果始终使用不同标签展示。
+
+## 团队信息（比赛提交必填）
+
+| 项 | 内容 |
+|---|---|
+| 学校 / 院系 | <!-- 请按报名信息填写 --> |
+| 参赛组别 | <!-- 研究生组 / A组 / B组 / C组，严格按学籍身份 --> |
+| 队员 1（队长） | <!-- 姓名 · 专业年级 · 分工：产品与前端 --> |
+| 队员 2 | <!-- 姓名 · 专业年级 · 分工：AI 管线与评测 --> |
+| 队员 3 | <!-- 姓名 · 专业年级 · 分工：后端与部署（如单人/双人参赛删除多余行） --> |
+| 指导教师 | <!-- 姓名 · 院系（≤2 名，无可留空） --> |
+| 联系邮箱 | <!-- 评审联系用 --> |
+
+## 技术架构（速览）
+
+```
+浏览器（Next.js 15 App Router / React 19 / Tailwind）
+   │  SSE 扫描进度 · 追问（文本+截图） · 补丁/报告导出
+   ▼
+Next API 路由（会话访问码 · Origin 校验 · 预算/限流）
+   ├─ 静态规则引擎（9 条确定性 AST 规则，零模型调用）
+   ├─ AI 审查编排（风险优先抽样 → 受限工具循环 → 证据校验门）
+   │     工具仅 read_file / search_code / list_imports / retrieve_guidelines
+   ├─ 专属 RAG（pgvector 余弦 + 词法二元组 RRF；本地 bge 嵌入零成本）
+   └─ 评测中心（24 样例 / 三模式消融 / 指标可回溯到 scanId）
+   ▼
+PostgreSQL 16 协议（本地 PGlite / 生产 PG + pgvector）· FOR UPDATE SKIP LOCKED 租约
+独立 worker（扫描 / 索引 / 评测 / TTL 清理）· 存储卷（快照与上传）
+```
+
+详细模块图与安全边界见 `docs/architecture.md`。
 
 ## 功能总览（对应规格 F01–F12）
 
@@ -132,16 +163,25 @@ pnpm exec tsx artifacts/acceptance/daily-budget-probe.ts
 - **会话隔离**：HttpOnly + SameSite=Lax cookie（生产 Secure），服务端仅存 token 哈希；跨会话对象一律 404；每会话最多一个活动扫描。
 - **可控 AI**：用户主动选择云端 AI 才发送代码片段；工具仅 read_file / search_code / list_imports / retrieve_guidelines 四件；界面如实区分 static / ai 来源与 Mock / 真实模型标签。
 
+## 开发方式说明（AI 辅助编程声明）
+
+本项目在开发过程中**大规模使用 AI 辅助编程**（对话式编码 agent + 人工逐项审阅），符合赛事「允许使用 AI 辅助编程工具，但选手须能清晰解释所有代码逻辑」的要求：
+
+- 全部代码由队员理解并可讲解：架构分层、证据校验、预算与租约等核心逻辑均配有单元 / 集成测试（335 项）与文档（`docs/architecture.md`、规格文档），答辩可按模块逐段解释；
+- Git 提交历史为真实开发过程记录（不倒填、不伪造）：前期以整机基线为主，后期按功能细粒度提交（修复 / 新增 / 重构 / 测量分类）；
+- 评测与验收数字全部如实标注口径（Mock / 真实模型、样本量、日期），不以 AI 生成内容冒充实测结果。
+
 ## 已知限制（诚实清单）
 
 以下为本仓库**当前真实验证状态**，不虚构：
 
-1. **真实模型调用未验证**：本机无模型凭证，全部验证基于 `AI_PROVIDER=mock` 与受控 provider 注入测试。真实 provider 代码路径（AI SDK v5、Chat Completions endpoint、ModelMessage 类型、30s 超时 / 180s 墙钟 / 日额度原子预留 / 证据校验）已按真实 SDK 实现，但**未发生过一次真实网络调用**。启用真实模型后应先跑 `pnpm doctor` 自检，再以小样本冒烟。
-2. **Docker / Compose 本地未验证**：开发机无 Docker。`Dockerfile` 与 `compose.yaml` 按规格第 6/14 节编写并通过人工审阅，但**未执行过 `docker build` / `docker compose up`**；首次部署时预期需要现场排障。
-3. **生产 PostgreSQL 路径已实现直连测试机制，但本机未实测**：设置 `INTEGRATION_DATABASE_URL`（指向测试专用库，名称须含 `test`；账号需 CREATEDB 权限）后，`pnpm test:integration` 在真实 PostgreSQL 上运行——逐测试文件创建/删除独立临时库、不启动 PGlite、输出服务器版本与驱动（不打印连接串）。本机无 PostgreSQL 16 实例，该路径未实际执行过，属首次部署验证项；本地验证基线仍为 PGlite socket（PGlite 不承载生产并发语义）。
-4. **评测为 24 样例小样本口径**：`fixtures/` 24 个项目（12 缺陷 + 12 对照，6 类问题，16/8 划分，版本 `v1-cd06ca6f`）。当前指标（static_only P/R/F1 = 1.000）只说明「管线 + 规则在该样例集上符合设计预期」，**不能推广为真实项目准确率**。
-5. **llm 模式评测为 Mock 管线**：llm_no_rag / hybrid_rag 模式的评测数字由确定性 Mock provider 产生（结果中逐项标注 provider=mock），不冒充真实模型指标；规格要求的真实模型保留集重复 3 次（均值与范围）未执行。
-6. 演示脚本（`docs/demo-script.md`）中的 AI 环节均为 Mock 演示；数字类演示来自真实静态评测记录（`docs/evaluation.md`）。
+1. **评测为 24 样例小样本口径**：`fixtures/` 24 个项目（12 缺陷 + 12 对照，6 类问题，16/8 划分，版本 `v1-cd06ca6f`）。指标只说明「管线在该样例集上的行为」，**不能推广为真实项目准确率**。
+2. **真实模型评测已执行（DeepSeek，2026-09-19/23 两轮）**：提示词 v1→v2 优化后 llm_no_rag P 0.857 / R 1.000 / F1 0.923，hybrid_rag（向量+词法）P 0.756 / R 1.000 / F1 0.850（各 n=3，均值；范围见 `docs/evaluation.md` §4.5/§4.6）。RAG 对指标的影响在小样本方差内，不宣称显著提升。
+3. **多模态图像理解需视觉语言模型**：追问截图会随请求发送给当前 `AI_CHAT_MODEL`；DeepSeek 对话模型为纯文本（截图流程可用但内容理解需 GLM-4V / GPT-4o / Qwen-VL 等 VL 模型，改 `AI_CHAT_MODEL` 即可）。Mock 环境下截图仅作流程演示并如实标注。
+4. **Docker / Compose 本地未验证**：开发机无 Docker。`Dockerfile` 与 `compose.yaml` 按规格编写并通过人工审阅，但**未执行过 `docker build` / `docker compose up`**；首次部署时预期需要现场排障。
+5. **生产 PostgreSQL 直连测试机制已实现、本机未实测**：设置 `INTEGRATION_DATABASE_URL`（库名须含 `test`）后 `pnpm test:integration` 直连真实 PostgreSQL；本机无实例，属首次部署验证项。本地基线为 PGlite socket（不承载生产并发语义）。
+6. **追问默认预算偏紧**（4 次模型 / 8 次工具 / 60s）：复杂问题可能预算耗尽（降级路径如实标注）；可用 `AI_ASK_*` 环境变量放宽（优化策略记录见 `docs/evaluation.md` §4.6）。
+7. 演示脚本（`docs/demo-script.md`）中未接 VL 模型的 AI 环节为 Mock 演示；数字类演示来自真实评测记录（`docs/evaluation.md`）。
 
 ## 文档导航
 
