@@ -1,0 +1,10 @@
+{
+  "_comment": "静态规则/报告测试的样例代码语料（被测功能的输入数据，非项目可执行代码）。含动态执行形态样例，供 sec/dynamic-code-exec 规则与报告对比测试使用。版本化数据文件：单一数据源。",
+  "evalDynamicAndFunction": "const x = eval(userInput)\nconst f = new Function(\"return 1\")\n",
+  "evalLiteralArg": "const x = eval('1+1')\n",
+  "evalWithDisableComment": "// eslint-disable-next-line no-eval\nconst x = eval(y)\n",
+  "evalReturnFunction": "function run(code) {\n  return eval(code)\n}\n",
+  "evalAssign": "const x = eval(a)\nconsole.log(x)\n",
+  "evalTsFile": "export function run(input: string) {\n  return eval(input)\n}\n",
+  "jsxListFile": "export function list(items: string[]) {\n  return items.map((it) => <li>{it}</li>)\n}\n"
+}

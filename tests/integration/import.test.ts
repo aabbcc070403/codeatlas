@@ -4,6 +4,7 @@ import fs from 'node:fs'
 import os from 'node:os'
 import { createTestDb, type TestDb } from '../helpers/db'
 import { buildDeflateZip } from '../helpers/zip'
+import { redactTokens } from '../helpers/samples'
 import { prepareSnapshot } from '../../src/core/import'
 import { persistSnapshot } from '../../src/server/snapshots'
 
@@ -40,7 +41,7 @@ const SAMPLE = {
     '  const html = props.userInput',
     '  return <div dangerouslySetInnerHTML={{ __html: html }} />',
     '}',
-    'const API_TOKEN = "ghp_abcdefghijklmnopqrstuvwxyz123456"',
+    `const API_TOKEN = "${redactTokens.ghToken}"`,
     'export default App',
   ].join('\n'),
   'src/utils/format.js': 'export function format(s) {\r\n  return s\r\n}\r\n',
@@ -82,7 +83,7 @@ describe('T03 ZIP 导入与快照', () => {
 
     // 脱敏：GitHub token 遮盖且等长
     const app = prepared.files.find((f) => f.path === 'src/App.tsx')!
-    expect(app.content).not.toContain('ghp_abcdefghijklmnopqrstuvwxyz123456')
+    expect(app.content).not.toContain(redactTokens.ghToken)
     const originalLine = (SAMPLE['src/App.tsx'] as string).split('\n')[7]!
     const maskedLine = app.content.split('\n')[7]!
     expect(maskedLine.length).toBe(originalLine.length)

@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { runStaticRules, type StaticFileInput } from '../../src/core/rules'
+import { codeSamples, lineOf } from '../helpers/samples'
 
 function run(path: string, content: string, extra: Partial<StaticFileInput> = {}) {
   const language = path.split('.').pop() ?? 'ts'
@@ -14,7 +15,7 @@ function byRule(findings: ReturnType<typeof run>['findings'], ruleId: string) {
 
 describe('规则：动态代码执行', () => {
   it('命中：eval 动态参数 / new Function', () => {
-    const r = run('a.ts', 'const x = eval(userInput)\nconst f = new Function("return 1")\n')
+    const r = run('a.ts', codeSamples.evalDynamicAndFunction)
     expect(byRule(r.findings, 'sec/dynamic-code-exec').length).toBe(2)
     const dynamic = byRule(r.findings, 'sec/dynamic-code-exec').find((f) => f.title.includes('候选'))!
     expect(dynamic.severity).toBe('high')
@@ -22,7 +23,7 @@ describe('规则：动态代码执行', () => {
   })
 
   it('命中：eval 字面量为低风险', () => {
-    const r = run('a.ts', "const x = eval('1+1')\n")
+    const r = run('a.ts', codeSamples.evalLiteralArg)
     const f = byRule(r.findings, 'sec/dynamic-code-exec')[0]!
     expect(f.severity).toBe('low')
     expect(f.needsReview).toBe(false)
@@ -203,7 +204,7 @@ describe('规则：禁用检查与调试输出', () => {
   })
 
   it('命中：eslint-disable 安全规则', () => {
-    const r = run('d.ts', '// eslint-disable-next-line no-eval\nconst x = eval(y)\n')
+    const r = run('d.ts', codeSamples.evalWithDisableComment)
     expect(byRule(r.findings, 'mai/ts-check-disabled').length).toBe(1)
   })
 
@@ -231,19 +232,19 @@ describe('规则：疑似硬编码密钥（来自脱敏记录）', () => {
 
 describe('静态结果合同', () => {
   it('所有 finding 携带真实路径、行号与引文', () => {
-    const content = 'function run(code) {\n  return eval(code)\n}\n'
+    const content = codeSamples.evalReturnFunction
     const r = run('src/danger.js', content)
     const f = byRule(r.findings, 'sec/dynamic-code-exec')[0]!
     expect(f.primary.path).toBe('src/danger.js')
     expect(f.primary.startLine).toBe(2)
     expect(f.primary.endLine).toBe(2)
-    expect(f.primary.quote).toBe('  return eval(code)')
+    expect(f.primary.quote).toBe(lineOf(codeSamples.evalReturnFunction, 2))
     expect(f.ruleId).toBeTruthy()
     expect(f.fingerprint).toContain('sec/dynamic-code-exec')
   })
 
   it('同一输入结果确定且按路径排序', () => {
-    const content = 'const x = eval(a)\nconsole.log(x)\n'
+    const content = codeSamples.evalAssign
     const r1 = run('z.ts', content)
     const r2 = run('z.ts', content)
     expect(r1.findings).toEqual(r2.findings)

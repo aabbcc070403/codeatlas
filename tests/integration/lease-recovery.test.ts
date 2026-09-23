@@ -5,6 +5,7 @@ import os from 'node:os'
 import postgres from 'postgres'
 import { createTestDb, type TestDb } from '../helpers/db'
 import { buildDeflateZip } from '../helpers/zip'
+import { codeSamples } from '../helpers/samples'
 import { prepareSnapshot } from '../../src/core/import'
 import { persistSnapshot } from '../../src/server/snapshots'
 import {
@@ -46,7 +47,7 @@ const SAMPLE_FILES: Array<{ name: string; content: string }> = [
   },
   {
     name: 'src/danger.js',
-    content: 'function run(code) {\n  return eval(code)\n}\n',
+    content: codeSamples.evalReturnFunction,
   },
   { name: 'package.json', content: '{"name":"t"}' },
 ]

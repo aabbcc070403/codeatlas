@@ -6,6 +6,7 @@ import os from 'node:os'
 import path from 'node:path'
 import { createTestDb, type TestDb } from '../helpers/db'
 import { buildDeflateZip } from '../helpers/zip'
+import { codeSamples, lineOf, redactTokens } from '../helpers/samples'
 import { prepareSnapshot } from '../../src/core/import'
 import { persistSnapshot } from '../../src/server/snapshots'
 import { seedAll } from '../../src/server/db/seed'
@@ -25,9 +26,9 @@ import * as sessionRoute from '../../src/app/api/session/route'
 
 /* ---------------- 样例 ---------------- */
 
-const FILE_A = 'export function run(input: string) {\n  return eval(input)\n}\n'
-const FILE_B = 'export function list(items: string[]) {\n  return items.map((it) => <li>{it}</li>)\n}\n'
-const FILE_GONE = 'export function gone() {\n  return "sk-live-1234567890"\n}\n'
+const FILE_A = codeSamples.evalTsFile
+const FILE_B = codeSamples.jsxListFile
+const FILE_GONE = `export function gone() {\n  return "${redactTokens.skLiveToken}"\n}\n`
 
 // 修复版：src/gone.ts 被删除（旧问题未覆盖 → 不可比较）；a/b 保持原样
 const BASE_FILES = [
@@ -58,14 +59,14 @@ interface FindingSpec {
 
 // 基准扫描问题：A（目标中行号平移同内容 → 仍存在）、B（仍在文件 → 未再检出）、C（文件被删 → 不可比较）
 const BASE_FINDINGS: FindingSpec[] = [
-  { key: 'A', ruleId: 'no-eval', source: 'static', path: 'src/a.ts', startLine: 2, endLine: 2, quote: '  return eval(input)', symbol: 'run' },
-  { key: 'B', ruleId: 'jsx-key', source: 'static', path: 'src/b.tsx', startLine: 2, endLine: 2, quote: '  return items.map((it) => <li>{it}</li>)', symbol: 'list' },
-  { key: 'C', ruleId: 'hardcoded-secret', source: 'static', path: 'src/gone.ts', startLine: 2, endLine: 2, quote: '  return "sk-live-1234567890"', symbol: 'gone', title: MALICIOUS_TITLE },
+  { key: 'A', ruleId: 'no-eval', source: 'static', path: 'src/a.ts', startLine: 2, endLine: 2, quote: lineOf(FILE_A, 2), symbol: 'run' },
+  { key: 'B', ruleId: 'jsx-key', source: 'static', path: 'src/b.tsx', startLine: 2, endLine: 2, quote: lineOf(FILE_B, 2), symbol: 'list' },
+  { key: 'C', ruleId: 'hardcoded-secret', source: 'static', path: 'src/gone.ts', startLine: 2, endLine: 2, quote: lineOf(FILE_GONE, 2), symbol: 'gone', title: MALICIOUS_TITLE },
 ]
 // 目标扫描问题：A 行号平移（仍存在）、D（AI 新问题 → 新增）
 const TARGET_FINDINGS: FindingSpec[] = [
-  { key: 'A2', ruleId: 'no-eval', source: 'static', path: 'src/a.ts', startLine: 5, endLine: 5, quote: '  return eval(input)', symbol: 'run' },
-  { key: 'D', ruleId: null, source: 'ai', path: 'src/a.ts', startLine: 1, endLine: 1, quote: 'export function run(input: string) {', symbol: 'run', title: 'AI 新增问题', evidenceStatus: 'needs_review' },
+  { key: 'A2', ruleId: 'no-eval', source: 'static', path: 'src/a.ts', startLine: 5, endLine: 5, quote: lineOf(FILE_A, 2), symbol: 'run' },
+  { key: 'D', ruleId: null, source: 'ai', path: 'src/a.ts', startLine: 1, endLine: 1, quote: lineOf(FILE_A, 1), symbol: 'run', title: 'AI 新增问题', evidenceStatus: 'needs_review' },
 ]
 
 /* ---------------- 基础设施 ---------------- */

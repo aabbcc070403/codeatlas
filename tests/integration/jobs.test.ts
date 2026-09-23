@@ -4,6 +4,7 @@ import fs from 'node:fs'
 import os from 'node:os'
 import { createTestDb, type TestDb } from '../helpers/db'
 import { buildDeflateZip } from '../helpers/zip'
+import { demoCorpus } from '../helpers/samples'
 import { prepareSnapshot } from '../../src/core/import'
 import { persistSnapshot } from '../../src/server/snapshots'
 import { claimJob, renewLease, newWorkerId, completeJob } from '../../src/worker/jobs'
@@ -31,7 +32,7 @@ const SAMPLE_FILES: Array<{ name: string; content: string }> = [
   },
   {
     name: 'src/danger.js',
-    content: 'function run(code) {\n  return eval(code)\n}\nwindow.addEventListener("message", (e) => {\n  doThing(e.data)\n})\n',
+    content: demoCorpus.sample.find((f) => f.name === 'src/danger.js')!.content,
   },
   { name: 'src/utils/format.ts', content: 'export function format(s: string) {\n  return s.trim()\n}\n' },
   { name: 'package.json', content: '{"name":"t","dependencies":{"react":"^19.0.0"}}' },

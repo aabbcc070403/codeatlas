@@ -1,11 +1,12 @@
 import { describe, it, expect } from 'vitest'
 import { redactSecrets, isSensitiveFilePath } from '../../src/core/import/redact'
+import { redactTokens as T } from '../helpers/samples'
 
 describe('等长脱敏', () => {
   it('赋值形式的密钥被等长遮盖并记录区间', () => {
-    const code = 'const apiKey = "sk-abcdef1234567890abcd";\nconsole.log(1);\n'
+    const code = `const apiKey = "${T.skToken}";\nconsole.log(1);\n`
     const r = redactSecrets(code)
-    expect(r.content).toBe('const apiKey = "' + '*'.repeat(23) + '";\nconsole.log(1);\n')
+    expect(r.content).toBe('const apiKey = "' + '*'.repeat(T.skToken.length) + '";\nconsole.log(1);\n')
     expect(r.content.length).toBe(code.length)
     expect(r.ranges).toEqual([{ line: 1, start: 16, end: 39 }])
     expect(r.maskedCount).toBe(1)
@@ -13,14 +14,14 @@ describe('等长脱敏', () => {
 
   it('已知 token 形态被遮盖（AKIA/ghp_/JWT）', () => {
     const code = [
-      'const aws = "AKIAIOSFODNN7EXAMPLE";',
-      'const gh = "ghp_abcdefghijklmnopqrstuvwxyz123456";',
-      'const jwt = "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.dozjgNryP4J3jVmNHl0w5N_XgL0n3I9PlFUP0THsR8U";',
+      `const aws = "${T.awsToken}";`,
+      `const gh = "${T.ghToken}";`,
+      `const jwt = "${T.jwtToken}";`,
     ].join('\n')
     const r = redactSecrets(code)
-    expect(r.content).not.toContain('AKIAIOSFODNN7EXAMPLE')
-    expect(r.content).not.toContain('ghp_')
-    expect(r.content).not.toContain('eyJhbGciOiJIUzI1NiJ9')
+    expect(r.content).not.toContain(T.awsToken)
+    expect(r.content).not.toContain(T.ghToken.slice(0, 4))
+    expect(r.content).not.toContain(T.jwtToken.split('.')[0])
     // 等长
     r.content.split('\n').forEach((line, i) => {
       expect(line.length).toBe(code.split('\n')[i]!.length)
@@ -30,12 +31,12 @@ describe('等长脱敏', () => {
   it('PEM 私钥整块遮盖', () => {
     const code = [
       '-----BEGIN RSA PRIVATE KEY-----',
-      'MIIEpAIBAAKCAQEA7x1a',
+      T.pemBody,
       '-----END RSA PRIVATE KEY-----',
       'const x = 1;',
     ].join('\n')
     const r = redactSecrets(code)
-    expect(r.content).not.toContain('MIIEpA')
+    expect(r.content).not.toContain(T.pemBody.slice(0, 6))
     expect(r.content).toContain('const x = 1;')
     // 换行位置不变
     expect(r.content.split('\n').length).toBe(4)
@@ -49,7 +50,7 @@ describe('等长脱敏', () => {
   })
 
   it('换行与字符位置保持（遮盖不改长度）', () => {
-    const code = 'a\npassword = "supersecret123"\nb'
+    const code = `a\npassword = "${T.passwordValue}"\nb`
     const r = redactSecrets(code)
     expect(r.content.length).toBe(code.length)
     expect(r.content.split('\n').length).toBe(3)

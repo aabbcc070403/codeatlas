@@ -3,6 +3,7 @@ import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 import { buildDeflateZip } from '../helpers/zip'
+import { demoCorpus } from '../helpers/samples'
 
 /**
  * E2E 共享帮助（R09 抽取自 static-review.spec.ts / evaluation.spec.ts，行为不变）：
@@ -13,48 +14,13 @@ import { buildDeflateZip } from '../helpers/zip'
 export const DEMO_CODE = 'e2e-demo-2026'
 export const ADMIN_CODE = 'e2e-admin-2026'
 
-export const SAMPLE_FILES: Array<{ name: string; content: string }> = [
-  {
-    name: 'src/App.tsx',
-    content: [
-      'import { format } from "./utils/format"',
-      'export function App({ bio }: { bio: string }) {',
-      '  return <div dangerouslySetInnerHTML={{ __html: bio }} />',
-      '}',
-      'export function List({ items }: { items: string[] }) {',
-      '  return <ul>{items.map((it) => <li>{it}</li>)}</ul>',
-      '}',
-    ].join('\n'),
-  },
-  {
-    name: 'src/danger.js',
-    content:
-      'function run(code) {\n  return eval(code)\n}\nwindow.addEventListener("message", (e) => {\n  doThing(e.data)\n})\n',
-  },
-  { name: 'src/utils/format.ts', content: 'export function format(s: string) {\n  return s.trim()\n}\n' },
-  { name: 'package.json', content: '{"name":"e2e-sample","dependencies":{"react":"^19.0.0"}}' },
-]
+/** 演示/E2E 语料（版本化数据文件 tests/fixtures/demo-corpus.json，单一数据源）：
+ *  原始版覆盖 4 类静态问题（html-injection / jsx-key / dynamic-exec / postmessage） */
+export const SAMPLE_FILES: Array<{ name: string; content: string }> = demoCorpus.sample
 
 /** 修复版样例（对比用）：移除 dangerouslySetInnerHTML（未再检出）、danger.js 增加 new Function（新增）；
  *  List 缺 key 与 eval 保持原内容（行号可能平移 → 仍存在），message 监听不变 */
-export const FIXED_FILES: Array<{ name: string; content: string }> = [
-  {
-    name: 'src/App.tsx',
-    content: [
-      'import { format } from "./utils/format"',
-      'export function List({ items }: { items: string[] }) {',
-      '  return <ul>{items.map((it) => <li>{it}</li>)}</ul>',
-      '}',
-    ].join('\n'),
-  },
-  {
-    name: 'src/danger.js',
-    content:
-      'function run(code) {\n  return eval(code)\n}\nfunction compile(expr) {\n  return new Function(expr)\n}\nwindow.addEventListener("message", (e) => {\n  doThing(e.data)\n})\n',
-  },
-  { name: 'src/utils/format.ts', content: 'export function format(s: string) {\n  return s.trim()\n}\n' },
-  { name: 'package.json', content: '{"name":"e2e-sample","dependencies":{"react":"^19.0.0"}}' },
-]
+export const FIXED_FILES: Array<{ name: string; content: string }> = demoCorpus.fixed
 
 export async function assertNoHorizontalOverflow(page: Page): Promise<void> {
   const overflow = await page.evaluate(

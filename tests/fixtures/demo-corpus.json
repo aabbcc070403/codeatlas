@@ -1,0 +1,39 @@
+{
+  "_comment": "演示/E2E 语料（P4.2）：4 类静态问题的原始版与修复版固定语料，由 scripts/make-demo-zip.ts 生成演示 ZIP，契约测试 tests/unit/demo-corpus.test.ts 锁定结构。版本化数据文件：单一数据源。",
+  "sample": [
+    {
+      "name": "src/App.tsx",
+      "content": "import { format } from \"./utils/format\"\nexport function App({ bio }: { bio: string }) {\n  return <div dangerouslySetInnerHTML={{ __html: bio }} />\n}\nexport function List({ items }: { items: string[] }) {\n  return <ul>{items.map((it) => <li>{it}</li>)}</ul>\n}"
+    },
+    {
+      "name": "src/danger.js",
+      "content": "function run(code) {\n  return eval(code)\n}\nwindow.addEventListener(\"message\", (e) => {\n  doThing(e.data)\n})\n"
+    },
+    {
+      "name": "src/utils/format.ts",
+      "content": "export function format(s: string) {\n  return s.trim()\n}\n"
+    },
+    {
+      "name": "package.json",
+      "content": "{\"name\":\"e2e-sample\",\"dependencies\":{\"react\":\"^19.0.0\"}}"
+    }
+  ],
+  "fixed": [
+    {
+      "name": "src/App.tsx",
+      "content": "import { format } from \"./utils/format\"\nexport function List({ items }: { items: string[] }) {\n  return <ul>{items.map((it) => <li>{it}</li>)}</ul>\n}"
+    },
+    {
+      "name": "src/danger.js",
+      "content": "function run(code) {\n  return eval(code)\n}\nfunction compile(expr) {\n  return new Function(expr)\n}\nwindow.addEventListener(\"message\", (e) => {\n  doThing(e.data)\n})\n"
+    },
+    {
+      "name": "src/utils/format.ts",
+      "content": "export function format(s: string) {\n  return s.trim()\n}\n"
+    },
+    {
+      "name": "package.json",
+      "content": "{\"name\":\"e2e-sample\",\"dependencies\":{\"react\":\"^19.0.0\"}}"
+    }
+  ]
+}

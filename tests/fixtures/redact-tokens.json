@@ -1,0 +1,10 @@
+{
+  "_comment": "脱敏功能测试语料（假凭证形态 token）。等长遮盖与 token 形态识别测试的输入数据；全部为公开示例/字母序假串，非真实凭证。版本化数据文件：单一数据源，契约测试与实现共用。",
+  "skToken": "sk-abcdef1234567890abcd",
+  "awsToken": "AKIAIOSFODNN7EXAMPLE",
+  "ghToken": "ghp_abcdefghijklmnopqrstuvwxyz123456",
+  "jwtToken": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.dozjgNryP4J3jVmNHl0w5N_XgL0n3I9PlFUP0THsR8U",
+  "pemBody": "MIIEpAIBAAKCAQEA7x1a",
+  "passwordValue": "supersecret123",
+  "skLiveToken": "sk-live-1234567890"
+}
