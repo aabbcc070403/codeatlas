@@ -140,11 +140,15 @@ function makeErrorResponse(message: string): Buffer {
 }
 
 export async function startDbServer(
-  opts: { dataDir?: string; port?: number; maxConnections?: number } = {},
+  opts: { dataDir?: string; rootDir?: string; port?: number; maxConnections?: number } = {},
 ): Promise<DbServerHandle> {
-  const dataDir = path.isAbsolute(opts.dataDir ?? '')
-    ? (opts.dataDir as string)
-    : path.resolve(process.cwd(), opts.dataDir ?? '.data/pglite')
+  // 根目录边界校验（防路径穿越）：数据目录必须就是 rootDir（默认项目根）或落在其内；
+  // 测试/一次性脚本用临时目录时显式传 rootDir 作为边界根
+  const root = path.resolve(opts.rootDir ?? process.cwd())
+  const dataDir = path.resolve(root, opts.dataDir ?? '.data/pglite')
+  if (dataDir !== root && !dataDir.startsWith(root + path.sep)) {
+    throw new Error(`数据目录越界：${opts.dataDir ?? '.data/pglite'}`)
+  }
   fs.mkdirSync(path.dirname(dataDir), { recursive: true })
 
   const db = await PGlite.create({
@@ -449,8 +453,9 @@ const isMain =
   process.argv[1].endsWith('db-server.ts')
 
 if (isMain) {
-  const port = Number(process.argv[2]) || 5433
-  startDbServer({ port })
+  // 独立启动入口不接收任何外部输入：数据目录与端口均用函数内默认常量
+  // （测试 / e2e 经 API 显式传参，含根目录边界校验）
+  startDbServer()
     .then((handle) => {
       console.log(`[db-server] PGlite + pgvector 已启动: ${handle.url}`)
       console.log('[db-server] Ctrl+C 停止')
